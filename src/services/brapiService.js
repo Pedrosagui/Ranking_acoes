@@ -16,12 +16,15 @@ export async function fetchBatch(tickers, token) {
   const tickerList = tickers.join(',');
   const params = new URLSearchParams({
     modules: 'summaryProfile,financialData,defaultKeyStatistics',
-    token: token || 'j9AenuWTpLNEGCKi8fbEwn', // Token fixo solicitado pelo usuário
   });
 
   const url = `${BRAPI_BASE}/quote/${tickerList}?${params}`;
 
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${token || 'j9AenuWTpLNEGCKi8fbEwn'}`,
+    }
+  });
 
   if (!response.ok) {
     throw new Error(`Brapi API error: ${response.status} ${response.statusText}`);

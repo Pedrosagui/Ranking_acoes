@@ -7,7 +7,7 @@ import { TICKERS_B3 } from '../data/tickers';
 import { getDividendosHistoricos } from '../data/dividendosHistoricos';
 import { enrichStock } from '../utils/valuation';
 
-const BATCH_SIZE = 20; // Tickers por requisição Brapi
+const BATCH_SIZE = 1; // Tickers por requisição Brapi (o plano Free só permite 1 ativo por chamada)
 
 /**
  * Divide um array em lotes de tamanho fixo
@@ -107,7 +107,7 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
 
     // Delay entre lotes para evitar Rate Limit (HTTP 429) na API gratuita
     if (i < batches.length - 1) {
-      await sleep(1500);
+      await sleep(500);
     }
   }
 
