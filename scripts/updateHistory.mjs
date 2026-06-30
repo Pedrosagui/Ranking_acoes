@@ -10,8 +10,9 @@ let tickersContent = fs.readFileSync(tickersPath, 'utf-8');
 // Regex para extrair apenas a string do ticker
 const tickersMatches = [...tickersContent.matchAll(/ticker:\s*['"]([A-Z0-9]+)['"]/g)];
 const tickers = tickersMatches.map(m => m[1]);
+tickers.push('^BVSP'); // Adiciona o Ibovespa
 
-console.log(`Encontrados ${tickers.length} tickers.`);
+console.log(`Encontrados ${tickers.length} tickers (incluindo IBOV).`);
 
 const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -22,8 +23,8 @@ async function run() {
     const ticker = tickers[i];
     console.log(`[${i+1}/${tickers.length}] Buscando histórico de 5 anos para ${ticker}...`);
     
-    // Sufixo .SA é necessário no Yahoo Finance para ações brasileiras
-    const symbol = `${ticker}.SA`;
+    // Sufixo .SA é necessário no Yahoo Finance para ações brasileiras (mas não para índices globais como ^BVSP)
+    const symbol = ticker === '^BVSP' ? ticker : `${ticker}.SA`;
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=5y&interval=1mo`;
     
     try {
