@@ -118,4 +118,4 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
-
+}
