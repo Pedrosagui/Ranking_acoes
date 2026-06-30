@@ -14,9 +14,7 @@ const BRAPI_BASE = 'https://brapi.dev/api';
  */
 export async function fetchBatch(tickers, token) {
   const tickerList = tickers.join(',');
-  const params = new URLSearchParams({
-    modules: 'summaryProfile,financialData,defaultKeyStatistics',
-  });
+  const params = new URLSearchParams({});
 
   const url = `${BRAPI_BASE}/quote/${tickerList}?${params}`;
 
@@ -39,11 +37,6 @@ export async function fetchBatch(tickers, token) {
   return data.results.map(item => ({
     ticker: item.symbol,
     cotacaoAtual: item.regularMarketPrice ?? null,
-    lpa: item.defaultKeyStatistics?.earningsPerShare ?? item.defaultKeyStatistics?.trailingEps ?? item.eps ?? null,
-    vpa: item.defaultKeyStatistics?.bookValue ?? item.bookValue ?? null,
-    roe: (item.financialData?.returnOnEquity ?? item.returnOnEquity) 
-      ? (item.financialData?.returnOnEquity ?? item.returnOnEquity) * 100 
-      : null,
   }));
 }
 

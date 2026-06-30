@@ -6,6 +6,7 @@ import { saveStocks, addLog } from '../db/database';
 import { TICKERS_B3 } from '../data/tickers';
 import { getDividendosHistoricos } from '../data/dividendosHistoricos';
 import { enrichStock } from '../utils/valuation';
+import { getFundamentos } from '../data/fundamentos';
 
 const BATCH_SIZE = 1; // Tickers por requisição Brapi (o plano Free só permite 1 ativo por chamada)
 
@@ -63,21 +64,22 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
         throw apiError;
       }
 
-      // Mescla dados da API com histórico de dividendos bundled
+      // Mescla dados da API com histórico de dividendos bundled E dados fundamentalistas locais
       const enrichedStocks = apiResults
         .filter(r => r && r.cotacaoAtual)
         .map(apiData => {
           const tickerInfo = TICKERS_B3.find(t => t.ticker === apiData.ticker) || {};
           const dividendosHistoricos = getDividendosHistoricos(apiData.ticker);
+          const fundamentos = getFundamentos(apiData.ticker);
 
           const rawStock = {
             ticker: apiData.ticker,
             empresa: tickerInfo.empresa || apiData.ticker,
             setor: tickerInfo.setor || 'Outros',
             cotacaoAtual: apiData.cotacaoAtual,
-            lpa: apiData.lpa,
-            vpa: apiData.vpa,
-            roe: apiData.roe,
+            lpa: fundamentos.lpa,
+            vpa: fundamentos.vpa,
+            roe: fundamentos.roe,
             dividendosHistoricos,
             atualizadoEm: new Date().toISOString(),
           };
