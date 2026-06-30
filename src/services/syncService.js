@@ -110,9 +110,9 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
       console.error(`Erro no lote ${i + 1}:`, error);
     }
 
-    // Delay entre lotes para não sobrecarregar a API (apenas com token real)
+    // Delay entre lotes para evitar Rate Limit (HTTP 429) na API gratuita
     if (token && i < batches.length - 1) {
-      await sleep(300);
+      await sleep(1500);
     }
   }
 

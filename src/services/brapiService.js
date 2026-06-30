@@ -36,10 +36,10 @@ export async function fetchBatch(tickers, token) {
   return data.results.map(item => ({
     ticker: item.symbol,
     cotacaoAtual: item.regularMarketPrice ?? null,
-    lpa: item.eps ?? null,           // Earnings Per Share (LPA)
-    vpa: item.bookValue ?? null,     // Book Value Per Share (VPA)
-    roe: item.returnOnEquity        // ROE vem em decimal (0.18 = 18%)
-      ? item.returnOnEquity * 100
+    lpa: item.defaultKeyStatistics?.earningsPerShare ?? item.defaultKeyStatistics?.trailingEps ?? item.eps ?? null,
+    vpa: item.defaultKeyStatistics?.bookValue ?? item.bookValue ?? null,
+    roe: (item.financialData?.returnOnEquity ?? item.returnOnEquity) 
+      ? (item.financialData?.returnOnEquity ?? item.returnOnEquity) * 100 
       : null,
   }));
 }
