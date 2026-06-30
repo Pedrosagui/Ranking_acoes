@@ -1,11 +1,13 @@
 // src/context/StockContext.jsx
 // Context API: estado global do app, actions e inicialização
 
-import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import { getAllStocks, getSetting, setSetting, getRecentLogs, clearAll } from '../db/database';
 import { syncAllStocks } from '../services/syncService';
 import { validateToken } from '../services/brapiService';
 import { rankStocks } from '../utils/valuation';
+
+const ONE_HOUR_MS = 60 * 60 * 1000; // 1 hora em milissegundos
 
 // ── Estado Inicial ────────────────────────────────────────────────
 const initialState = {
@@ -17,6 +19,7 @@ const initialState = {
   logs: [],             // Logs recentes
   lastSync: null,       // ISO string do último sync
   error: null,          // Mensagem de erro
+  autoSyncNeeded: false, // Flag para auto-sync
   filters: {
     busca: '',
     setor: 'Todos',
@@ -64,6 +67,9 @@ function stockReducer(state, action) {
     case 'SET_ERROR':
       return { ...state, error: action.payload };
 
+    case 'SET_AUTO_SYNC':
+      return { ...state, autoSyncNeeded: action.payload };
+
     case 'SET_FILTER':
       return {
         ...state,
@@ -83,6 +89,7 @@ const StockContext = createContext(null);
 
 export function StockProvider({ children }) {
   const [state, dispatch] = useReducer(stockReducer, initialState);
+  const syncAllRef = useRef(null);
 
   // Inicialização: carrega dados do IndexedDB ao montar
   useEffect(() => {
@@ -102,6 +109,12 @@ export function StockProvider({ children }) {
 
         if (stocks.length > 0) {
           dispatch({ type: 'SET_STOCKS', payload: rankStocks(stocks) });
+        }
+
+        // Auto-sync se dados estão velhos (>1h) ou não existem
+        const isStale = !lastSync || (Date.now() - new Date(lastSync).getTime() > ONE_HOUR_MS);
+        if (isStale) {
+          dispatch({ type: 'SET_AUTO_SYNC', payload: true });
         }
       } catch (err) {
         dispatch({ type: 'SET_ERROR', payload: 'Erro ao carregar dados: ' + err.message });
@@ -151,6 +164,27 @@ export function StockProvider({ children }) {
       dispatch({ type: 'SET_SYNC_PROGRESS', payload: null });
     }
   }, [state.isSyncing, state.apiToken]);
+
+  // Mantém ref atualizada para uso nos efeitos sem dependências circulares
+  useEffect(() => {
+    syncAllRef.current = syncAll;
+  }, [syncAll]);
+
+  // ── Auto-sync: dispara quando autoSyncNeeded fica true ────────
+  useEffect(() => {
+    if (state.autoSyncNeeded && !state.isLoading && !state.isSyncing) {
+      dispatch({ type: 'SET_AUTO_SYNC', payload: false });
+      if (syncAllRef.current) syncAllRef.current();
+    }
+  }, [state.autoSyncNeeded, state.isLoading, state.isSyncing]);
+
+  // ── Auto-refresh a cada 1 hora ────────────────────────────────
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      dispatch({ type: 'SET_AUTO_SYNC', payload: true });
+    }, ONE_HOUR_MS);
+    return () => clearInterval(intervalId);
+  }, []);
 
   const saveToken = useCallback(async (token) => {
     await setSetting('apiToken', token);

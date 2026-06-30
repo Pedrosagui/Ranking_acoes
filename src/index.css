@@ -400,6 +400,50 @@ body {
   color: var(--text-muted);
 }
 
+/* Token Warning Banner */
+.token-banner {
+  background: var(--yellow-dim);
+  border: 1px solid var(--yellow-border);
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  animation: cardIn 0.3s ease both;
+}
+
+.token-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.token-banner-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.token-banner-text {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  min-width: 200px;
+}
+
+.token-banner-text a {
+  color: var(--indigo);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.token-banner-text a:hover {
+  text-decoration: underline;
+}
+
+.token-banner-text strong {
+  color: var(--yellow);
+}
+
 /* ── Cards Grid ──────────────────────────────────────────────── */
 .cards-grid {
   display: grid;

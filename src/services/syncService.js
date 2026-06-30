@@ -55,12 +55,17 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
     }
 
     try {
-      // Se sem token, usa dados mock para demonstração
+      // Sempre tenta a API real primeiro; mock só como último recurso
       let apiResults;
-      if (!token) {
-        apiResults = generateMockData(tickerNames);
-      } else {
-        apiResults = await fetchBatch(tickerNames, token);
+      try {
+        apiResults = await fetchBatch(tickerNames, token || '');
+      } catch (apiError) {
+        if (!token) {
+          await addLog('WARN', `API sem token falhou (${apiError.message}), usando dados mock`);
+          apiResults = generateMockData(tickerNames);
+        } else {
+          throw apiError;
+        }
       }
 
       // Mescla dados da API com histórico de dividendos bundled

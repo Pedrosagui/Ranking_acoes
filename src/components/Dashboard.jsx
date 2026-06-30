@@ -1,9 +1,11 @@
 // src/components/Dashboard.jsx
+import { useState } from 'react';
 import { useStocks } from '../context/StockContext';
 import StockCard from './StockCard';
 import ValuationChart from './ValuationChart';
 import FilterBar from './FilterBar';
 import SyncProgressBar from './SyncProgressBar';
+import SettingsModal from './SettingsModal';
 
 function EmptyState({ onSync }) {
   return (
@@ -38,14 +40,38 @@ function LoadingState() {
   );
 }
 
+function TokenBanner({ onOpenSettings }) {
+  return (
+    <div className="token-banner">
+      <div className="token-banner-content">
+        <span className="token-banner-icon">🔑</span>
+        <div className="token-banner-text">
+          <strong>Dados podem estar imprecisos.</strong> Configure seu token gratuito da{' '}
+          <a href="https://brapi.dev/dashboard" target="_blank" rel="noopener noreferrer">Brapi</a>{' '}
+          para obter cotações em tempo real.
+        </div>
+        <button className="btn btn-ghost" onClick={onOpenSettings}>
+          Configurar Token
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
-  const { filteredStocks, stocks, isLoading, isSyncing, error, syncAll } = useStocks();
+  const { filteredStocks, stocks, isLoading, isSyncing, error, syncAll, apiToken } = useStocks();
+  const [showSettings, setShowSettings] = useState(false);
 
   if (isLoading) return <LoadingState />;
   if (stocks.length === 0 && !isSyncing) return <EmptyState onSync={syncAll} />;
 
   return (
     <main className="dashboard">
+      {/* Banner de aviso se não tem token */}
+      {!apiToken && stocks.length > 0 && (
+        <TokenBanner onOpenSettings={() => setShowSettings(true)} />
+      )}
+
       {/* Barra de progresso do sync */}
       <SyncProgressBar />
 
@@ -82,6 +108,8 @@ export default function Dashboard() {
           <p>Iniciando sincronização...</p>
         </div>
       )}
+
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </main>
   );
 }
