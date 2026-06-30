@@ -106,7 +106,7 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
     }
 
     // Delay entre lotes para evitar Rate Limit (HTTP 429) na API gratuita
-    if (token && i < batches.length - 1) {
+    if (i < batches.length - 1) {
       await sleep(1500);
     }
   }

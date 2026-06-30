@@ -16,7 +16,7 @@ export async function fetchBatch(tickers, token) {
   const tickerList = tickers.join(',');
   const params = new URLSearchParams({
     modules: 'summaryProfile,financialData,defaultKeyStatistics',
-    token: token || '',
+    token: token || 'j9AenuWTpLNEGCKi8fbEwn', // Token fixo solicitado pelo usuário
   });
 
   const url = `${BRAPI_BASE}/quote/${tickerList}?${params}`;
