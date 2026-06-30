@@ -150,22 +150,6 @@ export const TICKERS_B3 = [
   { ticker: 'BRPR3', empresa: 'BR Properties', setor: 'Imobiliário' },
   { ticker: 'CURY3', empresa: 'Cury Construtora', setor: 'Construção Civil' },
 
-  // ── FUNDOS IMOBILIÁRIOS (FIIs) ───────────────────────────────
-  { ticker: 'HGLG11', empresa: 'CSHG Logística FII', setor: 'FII' },
-  { ticker: 'KNRI11', empresa: 'Kinea Renda Imobiliária FII', setor: 'FII' },
-  { ticker: 'MXRF11', empresa: 'Maxi Renda FII', setor: 'FII' },
-  { ticker: 'XPML11', empresa: 'XP Malls FII', setor: 'FII' },
-  { ticker: 'VISC11', empresa: 'Vinci Shopping Centers FII', setor: 'FII' },
-  { ticker: 'BCFF11', empresa: 'BTG Pactual Fundo de Fundos FII', setor: 'FII' },
-  { ticker: 'HFOF11', empresa: 'Hedge Top FOFII', setor: 'FII' },
-  { ticker: 'RBRF11', empresa: 'RBR Alpha Fundo de Fundos FII', setor: 'FII' },
-  { ticker: 'VRTA11', empresa: 'Fator Veritá FII', setor: 'FII' },
-  { ticker: 'KNCR11', empresa: 'Kinea Índice de Preços FII', setor: 'FII' },
-  { ticker: 'RECT11', empresa: 'REC Renda Imobiliária FII', setor: 'FII' },
-  { ticker: 'PVBI11', empresa: 'VBI Prime Properties FII', setor: 'FII' },
-  { ticker: 'HSML11', empresa: 'HSI Malls FII', setor: 'FII' },
-  { ticker: 'MALL11', empresa: 'Malls Brasil Plural FII', setor: 'FII' },
-  { ticker: 'BRCO11', empresa: 'Bresco Logística FII', setor: 'FII' },
 
   // ── OUTROS SETORES ───────────────────────────────────────────
   { ticker: 'RADL3', empresa: 'Raia Drogasil', setor: 'Saúde' },

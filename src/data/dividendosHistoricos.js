@@ -284,49 +284,7 @@ export const DIVIDENDOS_HISTORICOS = {
     { ano: 2021, totalPago: 0.72 }, { ano: 2022, totalPago: 1.20 },
     { ano: 2023, totalPago: 1.44 }, { ano: 2024, totalPago: 1.68 },
   ],
-  // ── FIIs (dividendos mensais somados por ano) ─────────────────
-  HGLG11: [
-    { ano: 2015, totalPago: 7.20 }, { ano: 2016, totalPago: 7.80 },
-    { ano: 2017, totalPago: 8.40 }, { ano: 2018, totalPago: 9.00 },
-    { ano: 2019, totalPago: 9.60 }, { ano: 2020, totalPago: 8.40 },
-    { ano: 2021, totalPago: 9.60 }, { ano: 2022, totalPago: 11.40 },
-    { ano: 2023, totalPago: 13.20 }, { ano: 2024, totalPago: 14.40 },
-  ],
-  KNRI11: [
-    { ano: 2015, totalPago: 8.40 }, { ano: 2016, totalPago: 9.00 },
-    { ano: 2017, totalPago: 9.60 }, { ano: 2018, totalPago: 10.20 },
-    { ano: 2019, totalPago: 11.40 }, { ano: 2020, totalPago: 9.60 },
-    { ano: 2021, totalPago: 10.80 }, { ano: 2022, totalPago: 13.20 },
-    { ano: 2023, totalPago: 15.60 }, { ano: 2024, totalPago: 17.40 },
-  ],
-  MXRF11: [
-    { ano: 2015, totalPago: 1.08 }, { ano: 2016, totalPago: 1.08 },
-    { ano: 2017, totalPago: 1.08 }, { ano: 2018, totalPago: 1.20 },
-    { ano: 2019, totalPago: 1.32 }, { ano: 2020, totalPago: 1.20 },
-    { ano: 2021, totalPago: 1.32 }, { ano: 2022, totalPago: 1.44 },
-    { ano: 2023, totalPago: 1.44 }, { ano: 2024, totalPago: 1.56 },
-  ],
-  XPML11: [
-    { ano: 2015, totalPago: 0.00 }, { ano: 2016, totalPago: 0.00 },
-    { ano: 2017, totalPago: 0.80 }, { ano: 2018, totalPago: 6.00 },
-    { ano: 2019, totalPago: 8.40 }, { ano: 2020, totalPago: 4.80 },
-    { ano: 2021, totalPago: 7.20 }, { ano: 2022, totalPago: 9.60 },
-    { ano: 2023, totalPago: 12.00 }, { ano: 2024, totalPago: 13.20 },
-  ],
-  VISC11: [
-    { ano: 2015, totalPago: 0.00 }, { ano: 2016, totalPago: 5.40 },
-    { ano: 2017, totalPago: 6.60 }, { ano: 2018, totalPago: 7.80 },
-    { ano: 2019, totalPago: 9.00 }, { ano: 2020, totalPago: 5.40 },
-    { ano: 2021, totalPago: 7.20 }, { ano: 2022, totalPago: 9.60 },
-    { ano: 2023, totalPago: 11.40 }, { ano: 2024, totalPago: 13.20 },
-  ],
-  BCFF11: [
-    { ano: 2015, totalPago: 6.00 }, { ano: 2016, totalPago: 6.60 },
-    { ano: 2017, totalPago: 7.20 }, { ano: 2018, totalPago: 7.80 },
-    { ano: 2019, totalPago: 8.40 }, { ano: 2020, totalPago: 7.20 },
-    { ano: 2021, totalPago: 8.40 }, { ano: 2022, totalPago: 10.20 },
-    { ano: 2023, totalPago: 12.00 }, { ano: 2024, totalPago: 13.20 },
-  ],
+
   // ── Demais ações com dados estimados ─────────────────────────
   ABCB4: [
     { ano: 2015, totalPago: 0.80 }, { ano: 2016, totalPago: 0.96 },

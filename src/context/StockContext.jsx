@@ -189,6 +189,9 @@ export function StockProvider({ children }) {
   const saveToken = useCallback(async (token) => {
     await setSetting('apiToken', token);
     dispatch({ type: 'SET_TOKEN', payload: token });
+    if (token) {
+      dispatch({ type: 'SET_AUTO_SYNC', payload: true });
+    }
   }, []);
 
   const checkToken = useCallback(async (token) => {
