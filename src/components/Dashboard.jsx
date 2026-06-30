@@ -39,7 +39,7 @@ function Top10Chart({ stocks }) {
           <div key={stock.ticker} style={{ padding: '12px', border: '1px solid var(--border-light)', borderRadius: '6px', background: 'var(--bg-base)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <strong>#{i + 1} {stock.ticker}</strong>
-              <span className="text-green">{stock.scoreTotal} pts</span>
+              <span className="text-green">{stock.score} pts</span>
             </div>
             <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
               <div>Cot: R$ {stock.cotacaoAtual?.toFixed(2)}</div>
@@ -104,7 +104,7 @@ export default function Dashboard() {
                 <td className={stock.margemGraham > 0 ? 'text-green' : 'text-red'}>
                   {stock.margemGraham?.toFixed(1) || 'N/A'}%
                 </td>
-                <td style={{ fontWeight: 'bold' }}>{stock.scoreTotal}</td>
+                <td style={{ fontWeight: 'bold' }}>{stock.score}</td>
               </tr>
             ))}
           </tbody>

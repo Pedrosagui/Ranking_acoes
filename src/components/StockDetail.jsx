@@ -20,7 +20,7 @@ export default function StockDetail({ stock, onClose }) {
           </div>
           <div style={{ padding: '16px', border: '1px solid var(--border-light)', borderRadius: '8px' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>Score Total</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary)' }}>{stock.scoreTotal} pts</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary)' }}>{stock.score} pts</div>
           </div>
           <div style={{ padding: '16px', border: '1px solid var(--border-light)', borderRadius: '8px' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>Margem Graham</div>
@@ -69,8 +69,8 @@ export default function StockDetail({ stock, onClose }) {
               <td>{stock.roe?.toFixed(1)}%</td>
             </tr>
             <tr>
-              <td><strong>Preço Teto Graham:</strong></td>
-              <td>R$ {stock.precoTetoGraham?.toFixed(2)}</td>
+              <td><strong>Preço Justo (Graham):</strong></td>
+              <td>R$ {stock.precoJustoGraham?.toFixed(2)}</td>
             </tr>
           </tbody>
         </table>
