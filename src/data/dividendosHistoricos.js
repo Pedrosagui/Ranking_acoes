@@ -321,6 +321,20 @@ export const DIVIDENDOS_HISTORICOS = {
     { ano: 2021, totalPago: 1.80 }, { ano: 2022, totalPago: 2.40 },
     { ano: 2023, totalPago: 2.00 }, { ano: 2024, totalPago: 2.20 },
   ],
+  POMO3: [
+    { ano: 2015, totalPago: 0.05 }, { ano: 2016, totalPago: 0.04 },
+    { ano: 2017, totalPago: 0.08 }, { ano: 2018, totalPago: 0.12 },
+    { ano: 2019, totalPago: 0.16 }, { ano: 2020, totalPago: 0.08 },
+    { ano: 2021, totalPago: 0.02 }, { ano: 2022, totalPago: 0.15 },
+    { ano: 2023, totalPago: 0.35 }, { ano: 2024, totalPago: 0.40 },
+  ],
+  POMO4: [
+    { ano: 2015, totalPago: 0.05 }, { ano: 2016, totalPago: 0.04 },
+    { ano: 2017, totalPago: 0.08 }, { ano: 2018, totalPago: 0.12 },
+    { ano: 2019, totalPago: 0.16 }, { ano: 2020, totalPago: 0.08 },
+    { ano: 2021, totalPago: 0.02 }, { ano: 2022, totalPago: 0.15 },
+    { ano: 2023, totalPago: 0.35 }, { ano: 2024, totalPago: 0.40 },
+  ],
 };
 
 // Para tickers sem histórico específico, gera dados genéricos zerados

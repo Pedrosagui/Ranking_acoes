@@ -68,7 +68,8 @@ export const TICKERS_B3 = [
   { ticker: 'CCRO3', empresa: 'CCR', setor: 'Logística' },
   { ticker: 'ECOR3', empresa: 'EcoRodovias', setor: 'Logística' },
   { ticker: 'TGMA3', empresa: 'Tegma', setor: 'Logística' },
-  { ticker: 'POMO4', empresa: 'Marcopolo', setor: 'Logística' },
+  { ticker: 'POMO3', empresa: 'Marcopolo ON', setor: 'Logística' },
+  { ticker: 'POMO4', empresa: 'Marcopolo PN', setor: 'Logística' },
 
   // ── AVIAÇÃO ─────────────────────────────────────────────────
   { ticker: 'AZUL4', empresa: 'Azul', setor: 'Aviação' },

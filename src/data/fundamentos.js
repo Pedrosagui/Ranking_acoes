@@ -38,6 +38,8 @@ export const fundamentos = {
   UGPA3: { lpa: 2.10, vpa: 14.50, roe: 14.4 },
   CSAN3: { lpa: 1.10, vpa: 7.80, roe: 14.1 },
   RAIZ4: { lpa: 0.25, vpa: 1.80, roe: 13.8 },
+  POMO3: { lpa: 0.51, vpa: 2.10, roe: 24.1 },
+  POMO4: { lpa: 0.51, vpa: 2.10, roe: 24.1 },
 };
 
 /**
