@@ -7,26 +7,24 @@ import FilterBar from './FilterBar';
 import SyncProgressBar from './SyncProgressBar';
 import SettingsModal from './SettingsModal';
 
-function EmptyState({ onSync }) {
+function EmptyState({ onSync, onOpenSettings }) {
   return (
     <div className="empty-state">
       <div className="empty-icon">📊</div>
       <h2 className="empty-title">Bem-vindo ao ValorB3</h2>
       <p className="empty-description">
-        Clique em <strong>Sincronizar Todos os Ativos</strong> para carregar e ranquear
-        os principais ativos da B3 automaticamente.
+        Configure seu token gratuito da Brapi para carregar e ranquear
+        os principais ativos da B3 automaticamente com dados reais.
       </p>
-      <p className="empty-hint">
-        💡 Funciona sem API key no modo demonstração com dados realistas
-      </p>
-      <button className="btn btn-primary btn-large" onClick={onSync}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="btn-icon">
-          <polyline points="23 4 23 10 17 10" />
-          <polyline points="1 20 1 14 7 14" />
-          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-        </svg>
-        Sincronizar Todos os Ativos (~150 da B3)
-      </button>
+      <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '20px' }}>
+        <button className="btn btn-primary" onClick={onOpenSettings}>
+          <span style={{ marginRight: '8px' }}>🔑</span>
+          Configurar Token
+        </button>
+        <button className="btn btn-ghost" onClick={onSync}>
+          Sincronizar
+        </button>
+      </div>
     </div>
   );
 }
@@ -63,7 +61,12 @@ export default function Dashboard() {
   const [showSettings, setShowSettings] = useState(false);
 
   if (isLoading) return <LoadingState />;
-  if (stocks.length === 0 && !isSyncing) return <EmptyState onSync={syncAll} />;
+  if (stocks.length === 0 && !isSyncing) return (
+    <>
+      <EmptyState onSync={syncAll} onOpenSettings={() => setShowSettings(true)} />
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+    </>
+  );
 
   return (
     <main className="dashboard">

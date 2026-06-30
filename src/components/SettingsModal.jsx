@@ -52,7 +52,7 @@ export default function SettingsModal({ onClose }) {
           <h3 className="modal-section-title">🔑 Token da API Brapi</h3>
           <p className="modal-description">
             A Brapi oferece um token gratuito para consultas a dados da B3.
-            Sem token, o app usa dados de demonstração.
+            Este token é estritamente necessário para buscar os dados reais das ações.
           </p>
           <a
             href="https://brapi.dev/dashboard"

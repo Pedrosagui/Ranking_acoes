@@ -92,3 +92,10 @@ export async function clearAll() {
   await db.logs.clear();
   // Mantém settings (não apaga o token da API)
 }
+
+/**
+ * Limpa apenas as ações (útil ao salvar token para forçar limpeza do mock)
+ */
+export async function clearStocks() {
+  await db.stocks.clear();
+}

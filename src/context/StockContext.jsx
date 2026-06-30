@@ -2,7 +2,7 @@
 // Context API: estado global do app, actions e inicialização
 
 import { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
-import { getAllStocks, getSetting, setSetting, getRecentLogs, clearAll } from '../db/database';
+import { getAllStocks, getSetting, setSetting, getRecentLogs, clearAll, clearStocks } from '../db/database';
 import { syncAllStocks } from '../services/syncService';
 import { validateToken } from '../services/brapiService';
 import { rankStocks } from '../utils/valuation';
@@ -190,6 +190,9 @@ export function StockProvider({ children }) {
     await setSetting('apiToken', token);
     dispatch({ type: 'SET_TOKEN', payload: token });
     if (token) {
+      // Limpa as ações em memória e no IndexedDB para apagar o mock velho
+      await clearStocks();
+      dispatch({ type: 'SET_STOCKS', payload: [] });
       dispatch({ type: 'SET_AUTO_SYNC', payload: true });
     }
   }, []);
