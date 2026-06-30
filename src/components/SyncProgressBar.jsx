@@ -16,7 +16,7 @@ export default function SyncProgressBar() {
           <span className="sync-bar-label">
             ⚡ Sincronizando lote {loteAtual}/{totalLotes}
           </span>
-          <span className="sync-bar-percent">{percent}%</span>
+          <span className="sync-bar-percent"> - {percent}%</span>
         </div>
         <div className="sync-bar-track">
           <div
