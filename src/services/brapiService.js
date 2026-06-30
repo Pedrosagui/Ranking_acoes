@@ -64,3 +64,29 @@ export async function validateToken(token) {
     return false;
   }
 }
+
+/**
+ * Busca histórico de cotação de 3 meses de um ticker
+ */
+export async function fetchHistoricalData(ticker, token = null) {
+  const url = `https://brapi.dev/api/v2/stocks/historical?symbols=${ticker}&range=3mo&interval=1d`;
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${token || 'j9AenuWTpLNEGCKi8fbEwn'}`,
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('Falha ao buscar histórico de preços');
+  }
+
+  const data = await response.json();
+  if (!data.results || !data.results[0]?.historicalDataPrice) {
+    return [];
+  }
+
+  return data.results[0].historicalDataPrice.map(item => ({
+    date: new Date(item.date * 1000).toISOString(),
+    price: item.close
+  }));
+}
