@@ -1,24 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { fetchHistoricalData } from '../services/brapiService';
+import React from 'react';
+import { getHistorico } from '../data/historico5anos';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 export default function StockDetail({ stock, onClose }) {
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadHistory() {
-      try {
-        const data = await fetchHistoricalData(stock.ticker);
-        setHistory(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadHistory();
-  }, [stock.ticker]);
+  const history = getHistorico(stock.ticker);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -45,28 +30,26 @@ export default function StockDetail({ stock, onClose }) {
           </div>
         </div>
 
-        <h3>Gráfico de Preços (3 Meses)</h3>
+        <h3>Gráfico de Preços (Últimos 5 Anos)</h3>
         <div className="chart-container">
-          {loading ? (
-            <div className="center-content">Carregando gráfico...</div>
-          ) : history.length > 0 ? (
+          {history.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={history}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
                 <XAxis 
                   dataKey="date" 
-                  tickFormatter={str => new Date(str).toLocaleDateString('pt-BR', { month: 'short', day: 'numeric' })} 
+                  tickFormatter={str => new Date(str).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })} 
                 />
                 <YAxis domain={['auto', 'auto']} tickFormatter={val => `R$ ${val}`} />
                 <Tooltip 
                   formatter={value => [`R$ ${value}`, 'Preço']}
-                  labelFormatter={label => new Date(label).toLocaleDateString('pt-BR')}
+                  labelFormatter={label => new Date(label).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                 />
                 <Line type="monotone" dataKey="price" stroke="var(--primary)" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="center-content">Sem histórico disponível</div>
+            <div className="center-content">Sem histórico de 5 anos disponível no Yahoo Finance</div>
           )}
         </div>
 
