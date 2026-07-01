@@ -1,23 +1,15 @@
 // src/services/syncService.js
 // Agora busca do backend em node (Aegis Server)
 
-import { saveStocks, addLog } from '../db/database';
 import { enrichStock } from '../utils/valuation';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 /**
- * Sincroniza todos os ativos chamando nosso backend
+ * Busca os dados do servidor e os enriquece com cálculos locais.
  */
-export async function syncAllStocks(token, onProgress, onBatchComplete) {
+export async function syncAllStocks() {
   try {
-    onProgress({
-      loteAtual: 1,
-      totalLotes: 1,
-      tickersProcessados: 0,
-      tickersNomesAtual: "Buscando servidor..."
-    });
-
     const res = await fetch(`${API_URL}/stocks`);
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
@@ -26,13 +18,6 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
     
     const dbStocks = await res.json();
     
-    onProgress({
-      loteAtual: 1,
-      totalLotes: 1,
-      tickersProcessados: Math.floor(dbStocks.length / 2),
-      tickersNomesAtual: "Calculando Indicadores..."
-    });
-
     // Enriquecer (calcular margens Bazin, Graham, etc)
     const enriched = dbStocks.map(s => {
       const precoAtual = s.cotacaoAtual || 10;
@@ -62,19 +47,9 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
       });
     });
 
-    onBatchComplete(enriched);
-    await saveStocks(enriched);
-    await addLog(`Sincronização via Backend concluída (${enriched.length} ativos)`);
-
-    onProgress({
-      loteAtual: 1,
-      totalLotes: 1,
-      tickersProcessados: dbStocks.length,
-      tickersNomesAtual: "Concluído!"
-    });
-
+    return enriched;
   } catch (error) {
-    await addLog(`Erro crasso na sincronização: ${error.message}`);
+    console.error(`Erro ao buscar ativos do servidor: ${error.message}`);
     throw error;
   }
 }

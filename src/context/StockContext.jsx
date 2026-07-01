@@ -1,10 +1,8 @@
 // src/context/StockContext.jsx
 // Context API: estado global do app, actions e inicialização
 
-import { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
-import { getAllStocks, getSetting, setSetting, getRecentLogs, clearAll, clearStocks } from '../db/database';
+import { createContext, useContext, useReducer, useEffect } from 'react';
 import { syncAllStocks } from '../services/syncService';
-import { validateToken } from '../services/brapiService';
 import { calcCompositeScore, PERFIS_SCORE } from '../utils/valuation';
 
 const ONE_HOUR_MS = 60 * 60 * 1000; // 1 hora em milissegundos
@@ -13,11 +11,6 @@ const ONE_HOUR_MS = 60 * 60 * 1000; // 1 hora em milissegundos
 const initialState = {
   stocks: [],           // Ações ranqueadas (enriquecidas + ordenadas)
   isLoading: false,     // Loading geral
-  isSyncing: false,     // Sync em progresso
-  syncProgress: null,   // { loteAtual, totalLotes, tickersProcessados, tickersNomesAtual }
-  apiToken: '',         // Token da Brapi
-  logs: [],             // Logs recentes
-  lastSync: null,       // ISO string do último sync
   error: null,          // Mensagem de erro
   autoSyncNeeded: false, // Flag para auto-sync
   activeProfile: 'equilibrado', // Perfil de pontuação atual
@@ -35,12 +28,6 @@ function stockReducer(state, action) {
   switch (action.type) {
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
-
-    case 'SET_SYNCING':
-      return { ...state, isSyncing: action.payload };
-
-    case 'SET_SYNC_PROGRESS':
-      return { ...state, syncProgress: action.payload };
 
     case 'SET_STOCKS':
       return { ...state, stocks: action.payload };
@@ -61,23 +48,8 @@ function stockReducer(state, action) {
         stocks: calcCompositeScore(state.stocks, PERFIS_SCORE[action.payload].pesos)
       };
 
-    case 'SET_TOKEN':
-      return { ...state, apiToken: action.payload };
-
-    case 'SET_LOGS':
-      return { ...state, logs: action.payload };
-
-    case 'ADD_LOG':
-      return { ...state, logs: [action.payload, ...state.logs].slice(0, 100) };
-
-    case 'SET_LAST_SYNC':
-      return { ...state, lastSync: action.payload };
-
     case 'SET_ERROR':
       return { ...state, error: action.payload };
-
-    case 'SET_AUTO_SYNC':
-      return { ...state, autoSyncNeeded: action.payload };
 
     case 'SET_FILTER':
       return {
@@ -86,7 +58,7 @@ function stockReducer(state, action) {
       };
 
     case 'RESET':
-      return { ...initialState, apiToken: state.apiToken };
+      return { ...initialState };
 
     default:
       return state;
@@ -98,32 +70,15 @@ const StockContext = createContext(null);
 
 export function StockProvider({ children }) {
   const [state, dispatch] = useReducer(stockReducer, initialState);
-  const syncAllRef = useRef(null);
-
-  // Inicialização: carrega dados do IndexedDB ao montar
+  // Inicialização: busca os dados direto do servidor (Aegis)
   useEffect(() => {
     async function init() {
       dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'SET_ERROR', payload: null });
       try {
-        const [stocks, token, lastSync, logs] = await Promise.all([
-          getAllStocks(),
-          getSetting('apiToken'),
-          getSetting('lastSync'),
-          getRecentLogs(50),
-        ]);
-
-        if (token) dispatch({ type: 'SET_TOKEN', payload: token });
-        if (lastSync) dispatch({ type: 'SET_LAST_SYNC', payload: lastSync });
-        if (logs.length) dispatch({ type: 'SET_LOGS', payload: logs });
-
-        if (stocks.length > 0) {
-          dispatch({ type: 'SET_STOCKS', payload: calcCompositeScore(stocks, PERFIS_SCORE['equilibrado'].pesos) });
-        }
-
-        // Auto-sync se dados estão velhos (>1h) ou não existem
-        const isStale = !lastSync || (Date.now() - new Date(lastSync).getTime() > ONE_HOUR_MS);
-        if (isStale) {
-          dispatch({ type: 'SET_AUTO_SYNC', payload: true });
+        const enriched = await syncAllStocks();
+        if (enriched.length > 0) {
+          dispatch({ type: 'SET_STOCKS', payload: calcCompositeScore(enriched, PERFIS_SCORE['equilibrado'].pesos) });
         }
       } catch (err) {
         dispatch({ type: 'SET_ERROR', payload: 'Erro ao carregar dados: ' + err.message });
@@ -133,51 +88,6 @@ export function StockProvider({ children }) {
     }
     init();
   }, []);
-
-  // ── Actions ───────────────────────────────────────────────────
-
-  const syncAll = useCallback(async () => {
-    if (state.isSyncing) return;
-
-    dispatch({ type: 'SET_SYNCING', payload: true });
-    dispatch({ type: 'SET_ERROR', payload: null });
-
-    try {
-      await syncAllStocks(
-        state.apiToken,
-        // onProgress
-        (progress) => {
-          dispatch({ type: 'SET_SYNC_PROGRESS', payload: progress });
-        },
-        // onBatchComplete — atualização progressiva da UI
-        (batch) => {
-          dispatch({ type: 'MERGE_BATCH', payload: batch });
-        }
-      );
-
-      // Recarrega tudo do IndexedDB ao final para garantir consistência
-      const finalStocks = await getAllStocks();
-      dispatch({ type: 'SET_STOCKS', payload: calcCompositeScore(finalStocks, PERFIS_SCORE[state.activeProfile].pesos) });
-
-      const now = new Date().toISOString();
-      await setSetting('lastSync', now);
-      dispatch({ type: 'SET_LAST_SYNC', payload: now });
-
-      const logs = await getRecentLogs(50);
-      dispatch({ type: 'SET_LOGS', payload: logs });
-
-    } catch (err) {
-      dispatch({ type: 'SET_ERROR', payload: 'Erro na sincronização: ' + err.message });
-    } finally {
-      dispatch({ type: 'SET_SYNCING', payload: false });
-      dispatch({ type: 'SET_SYNC_PROGRESS', payload: null });
-    }
-  }, [state.isSyncing, state.apiToken]);
-
-  // Mantém ref atualizada para uso nos efeitos sem dependências circulares
-  useEffect(() => {
-    syncAllRef.current = syncAll;
-  }, [syncAll]);
 
   // ── Auto-sync: dispara quando autoSyncNeeded fica true ────────
   useEffect(() => {
@@ -262,26 +172,18 @@ export function StockProvider({ children }) {
     return result.map((s, i) => ({ ...s, posicao: i + 1 }));
   })();
 
-  const value = {
-    ...state,
-    filteredStocks,
-    syncAll,
-    saveToken,
-    checkToken,
-    resetData,
-    setFilter,
-    setProfile,
-  };
-
   return (
-    <StockContext.Provider value={value}>
+    <StockContext.Provider value={{
+      ...state,
+      dispatch,
+      setProfile,
+      filteredStocks,
+    }}>
       {children}
     </StockContext.Provider>
   );
 }
 
 export function useStocks() {
-  const ctx = useContext(StockContext);
-  if (!ctx) throw new Error('useStocks deve ser usado dentro de StockProvider');
-  return ctx;
+  return useContext(StockContext);
 }

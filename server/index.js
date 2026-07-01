@@ -20,11 +20,17 @@ app.use(cors());
 app.use(express.json());
 
 import { updateQuotes } from './jobs/updateQuotes.js';
+import { updateFundamentals } from './jobs/updateFundamentals.js';
 
 // --- ROTAS DA API ---
 
 app.get('/api/admin/update-quotes', async (req, res) => {
   const result = await updateQuotes(prisma);
+  res.json(result);
+});
+
+app.get('/api/admin/update-fundamentals', async (req, res) => {
+  const result = await updateFundamentals(prisma);
   res.json(result);
 });
 
@@ -61,13 +67,13 @@ cron.schedule('0 10-18 * * 1-5', async () => {
   await updateQuotes(prisma);
 });
 
-// Cron 2: Atualizar Fundamentos (Fundamentus) todo sábado às 02:00
-cron.schedule('0 2 * * 6', async () => {
-  console.log('Iniciando rotina de fundamentos (Fundamentus)...');
-  // Aqui migraremos o updateDatabase.mjs
+// Cron 2: Atualizar Fundamentos e Valuation diariamente às 22:00
+cron.schedule('0 22 * * *', async () => {
+  console.log('Iniciando rotina de fundamentos (22:00)...');
+  await updateFundamentals(prisma);
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor Aegis rodando na porta ${PORT}`);
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });

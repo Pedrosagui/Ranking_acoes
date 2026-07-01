@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useStocks } from '../context/StockContext';
-import SyncProgressBar from './SyncProgressBar';
 import StockDetail from './StockDetail';
 import { rankPiotroskiGraham, PERFIS_SCORE } from '../utils/valuation';
 
@@ -21,7 +20,7 @@ function LoadingState() {
   return (
     <div className="center-content">
       <div className="loading-spinner-large"></div>
-      <p style={{ marginTop: '16px' }}>Carregando dados locais...</p>
+      <p style={{ marginTop: '16px' }}>Atualizando dados do servidor...</p>
     </div>
   );
 }
@@ -71,7 +70,7 @@ function Top10Chart({ stocks, title, scoreField, scoreSuffix = 'pts' }) {
 const ITEMS_PER_PAGE = 30;
 
 export default function Dashboard() {
-  const { filteredStocks, stocks, isLoading, isSyncing, error, activeProfile, setProfile, syncAll } = useStocks();
+  const { filteredStocks, stocks, isLoading, error, activeProfile, setProfile } = useStocks();
   const [activeTab, setActiveTab] = useState('graham_bazin');
   const [selectedStock, setSelectedStock] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -81,7 +80,7 @@ export default function Dashboard() {
     setCurrentPage(1);
   }, [activeTab, activeProfile, filteredStocks.length, searchQuery]);
 
-  if (isLoading || (isSyncing && stocks.length === 0)) return <LoadingState />;
+  if (isLoading || stocks.length === 0) return <LoadingState />;
 
   const searchedStocks = filteredStocks.filter(s => 
     s.ticker.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -503,15 +502,6 @@ export default function Dashboard() {
           {activeTab === 'graham_bazin' && renderGrahamBazin()}
           {activeTab === 'piotroski' && renderPiotroski()}
           {activeTab === 'metodologia' && renderMetodologia()}
-          
-          <div className="sync-section">
-            <button className="btn btn-primary" onClick={syncAll} disabled={isSyncing} style={{ width: '100%', maxWidth: '400px', margin: '40px auto 0', display: 'block', padding: '16px' }}>
-              {isSyncing ? 'Sincronizando...' : '🔄 Sincronizar Dados'}
-            </button>
-            <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>
-              Atualiza os dados de cotação com a B3.
-            </p>
-          </div>
         </div>
       </main>
 
