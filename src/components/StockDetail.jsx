@@ -136,11 +136,11 @@ export default function StockDetail({ stock, onClose }) {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>IBOV</span>
-                  <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>R$ {simulation.finalIbov.toFixed(2)}</span>
+                  <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--green)' }}>R$ {simulation.finalIbov.toFixed(2)}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>CDI</span>
-                  <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-muted)' }}>R$ {simulation.finalCdi.toFixed(2)}</span>
+                  <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>R$ {simulation.finalCdi.toFixed(2)}</span>
                 </div>
               </div>
             </div>
