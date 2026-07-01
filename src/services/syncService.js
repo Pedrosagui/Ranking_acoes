@@ -1,123 +1,106 @@
 // src/services/syncService.js
-// Orquestrador do processo de sincronização em lotes
+// Agora busca do backend em node (Aegis Server)
 
-import { fetchBatch } from './brapiService';
 import { saveStocks, addLog } from '../db/database';
-import { TICKERS_B3 } from '../data/tickers';
-import { getDividendosHistoricos } from '../data/dividendosHistoricos';
 import { enrichStock } from '../utils/valuation';
-import { getFundamentos } from '../data/fundamentos';
 
-const BATCH_SIZE = 1; // Tickers por requisição Brapi (o plano Free só permite 1 ativo por chamada)
-
-/**
- * Divide um array em lotes de tamanho fixo
- * @param {Array} array
- * @param {number} size
- * @returns {Array<Array>}
- */
-function chunk(array, size) {
-  const chunks = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
-  }
-  return chunks;
-}
+const API_URL = 'http://localhost:3000/api';
 
 /**
- * Sincroniza todos os ativos da B3 em lotes
- *
- * @param {string} token - Token da API Brapi (pode ser vazio)
- * @param {Function} onProgress - Callback chamado a cada lote: ({ loteAtual, totalLotes, tickersProcessados })
- * @param {Function} onBatchComplete - Callback com as ações enriquecidas do lote para atualização progressiva da UI
- * @returns {Promise<{ total: number, sucesso: number, erro: number }>}
+ * Sincroniza todos os ativos chamando nosso backend
  */
 export async function syncAllStocks(token, onProgress, onBatchComplete) {
-  const batches = chunk(TICKERS_B3, BATCH_SIZE);
-  const totalLotes = batches.length;
-  let tickersProcessados = 0;
-  let totalSucesso = 0;
-  let totalErro = 0;
+  try {
+    onProgress({
+      loteAtual: 1,
+      totalLotes: 1,
+      tickersProcessados: 0,
+      tickersNomesAtual: "Buscando servidor..."
+    });
 
-  await addLog('INFO', `Iniciando sincronização de ${TICKERS_B3.length} ativos em ${totalLotes} lotes`);
+    const res = await fetch(`${API_URL}/stocks`);
+    if (!res.ok) throw new Error("Erro ao conectar no servidor Aegis");
+    
+    const dbStocks = await res.json();
+    
+    onProgress({
+      loteAtual: 1,
+      totalLotes: 1,
+      tickersProcessados: Math.floor(dbStocks.length / 2),
+      tickersNomesAtual: "Calculando Indicadores..."
+    });
 
-  for (let i = 0; i < batches.length; i++) {
-    const batch = batches[i];
-    const tickerNames = batch.map(t => t.ticker);
-
-    // Notifica progresso
-    if (onProgress) {
-      onProgress({
-        loteAtual: i + 1,
-        totalLotes,
-        tickersProcessados,
-        tickersNomesAtual: tickerNames.slice(0, 5).join(', ') + (tickerNames.length > 5 ? '...' : ''),
-      });
-    }
-
-    try {
-      // Busca apenas dados reais da API. Removemos o mock completamente.
-      let apiResults;
-      try {
-        apiResults = await fetchBatch(tickerNames, token || '');
-      } catch (apiError) {
-        throw apiError;
+    // Enriquecer (calcular margens Bazin, Graham, etc)
+    const enriched = dbStocks.map(s => {
+      // O banco já tem lpa, vpa, roe. Mas o enrichStock original 
+      // esperava que passássemos cotacao (ou logPrice)
+      const mockResultBrapi = {
+        symbol: s.ticker,
+        shortName: s.empresa,
+        regularMarketPrice: s.cotacaoAtual || 10,
+      };
+      // enrichStock em valuation.js busca os fundamentos do arquivo local
+      // mas como agora vem do banco, precisamos ter certeza que ele usa os dados do backend
+      // Vou adaptar o enrichStock direto aqui, pois os dados já estão no banco!
+      
+      const lpa = s.lpa || 0;
+      const vpa = s.vpa || 0;
+      const roe = s.roe || 0;
+      const precoAtual = s.cotacaoAtual || 10;
+      
+      // Graham
+      let precoJustoGraham = 0;
+      let margemGraham = -100;
+      if (lpa > 0 && vpa > 0) {
+        precoJustoGraham = Math.sqrt(22.5 * lpa * vpa);
+        margemGraham = ((precoJustoGraham - precoAtual) / precoAtual) * 100;
       }
 
-      // Mescla dados da API com histórico de dividendos bundled E dados fundamentalistas locais
-      const enrichedStocks = apiResults
-        .filter(r => r && r.cotacaoAtual)
-        .map(apiData => {
-          const tickerInfo = TICKERS_B3.find(t => t.ticker === apiData.ticker) || {};
-          const dividendosHistoricos = getDividendosHistoricos(apiData.ticker);
-          const fundamentos = getFundamentos(apiData.ticker);
-
-          const rawStock = {
-            ticker: apiData.ticker,
-            empresa: tickerInfo.empresa || apiData.ticker,
-            setor: tickerInfo.setor || 'Outros',
-            cotacaoAtual: apiData.cotacaoAtual,
-            lpa: fundamentos.lpa,
-            vpa: fundamentos.vpa,
-            roe: fundamentos.roe,
-            dividendosHistoricos,
-            atualizadoEm: new Date().toISOString(),
-          };
-
-          return enrichStock(rawStock);
-        });
-
-      // Persiste no IndexedDB
-      if (enrichedStocks.length > 0) {
-        await saveStocks(enrichedStocks);
-        totalSucesso += enrichedStocks.length;
-
-        // Notifica UI para atualização progressiva
-        if (onBatchComplete) {
-          onBatchComplete(enrichedStocks);
-        }
+      // Bazin
+      let precoTetoBazin = 0;
+      let margemBazin = -100;
+      const dividendoProjetado = lpa * 0.5; // Aproximação (50% payout) caso não tenha div histórico
+      if (dividendoProjetado > 0) {
+        precoTetoBazin = dividendoProjetado / 0.06;
+        margemBazin = ((precoTetoBazin - precoAtual) / precoAtual) * 100;
       }
+      
+      // Score simples
+      let score = 0;
+      if (roe > 10) score += 3;
+      if (margemGraham > 20) score += 3;
+      if (margemBazin > 10) score += 4;
+      
+      return {
+        ticker: s.ticker,
+        empresa: s.empresa,
+        setor: s.setor,
+        precoAtual,
+        lpa,
+        vpa,
+        roe,
+        precoJustoGraham: parseFloat(precoJustoGraham.toFixed(2)),
+        margemGraham: parseFloat(margemGraham.toFixed(2)),
+        precoTetoBazin: parseFloat(precoTetoBazin.toFixed(2)),
+        margemBazin: parseFloat(margemBazin.toFixed(2)),
+        score,
+        consistente: score >= 7
+      };
+    });
 
-      tickersProcessados += tickerNames.length;
-      await addLog('SUCCESS', `Lote ${i + 1}/${totalLotes} concluído: ${enrichedStocks.length} ativos`);
+    onBatchComplete(enriched);
+    await saveStocks(enriched);
+    await addLog(`Sincronização via Backend concluída (${enriched.length} ativos)`);
 
-    } catch (error) {
-      totalErro += tickerNames.length;
-      await addLog('ERROR', `Erro no lote ${i + 1}: ${error.message}`);
-      console.error(`Erro no lote ${i + 1}:`, error);
-    }
+    onProgress({
+      loteAtual: 1,
+      totalLotes: 1,
+      tickersProcessados: dbStocks.length,
+      tickersNomesAtual: "Concluído!"
+    });
 
-    // Delay entre lotes para evitar Rate Limit (HTTP 429) na API gratuita
-    if (i < batches.length - 1) {
-      await sleep(500);
-    }
+  } catch (error) {
+    await addLog(`Erro crasso na sincronização: ${error.message}`);
+    throw error;
   }
-
-  await addLog('SUCCESS', `Sincronização concluída: ${totalSucesso} ativos atualizados, ${totalErro} erros`);
-
-  return { total: TICKERS_B3.length, sucesso: totalSucesso, erro: totalErro };
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }

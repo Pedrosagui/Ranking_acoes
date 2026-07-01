@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Stock {
+  ticker            String    @id
+  empresa           String
+  setor             String
+  
+  // Indicadores Básicos
+  cotacaoAtual      Float?
+  lpa               Float?
+  vpa               Float?
+  
+  // Indicadores de Valuation (Fundamentus)
+  pl                Float?
+  pvp               Float?
+  psr               Float?
+  divYield          Float?
+  pAtivo            Float?
+  pCapGiro          Float?
+  pEbit             Float?
+  pAtivCircLiq      Float?
+  evEbit            Float?
+  evEbitda          Float?
+
+  // Indicadores de Rentabilidade
+  margemEbit        Float?
+  margemLiquida     Float?
+  roic              Float?
+  roe               Float?
+  
+  // Indicadores de Liquidez e Endividamento
+  liqCorr           Float?
+  liq2Meses         Float?
+  patrimonioLiquido Float?
+  divBrutaPatrim    Float?
+  crescRec5a        Float?
+  
+  // Campos para os Filtros Futuros
+  pegRatio          Float?
+  fScore            Int?
+  financialData     Json?     // Armazena DRE/Balanço puro (útil para calcular o F-Score detalhado depois)
+  
+  updatedAt         DateTime  @updatedAt
+  
+  historico         History[]
+  dividendos        Dividend[]
+}
+
+model History {
+  id      Int    @id @default(autoincrement())
+  ticker  String
+  date    String // "YYYY-MM-DD" or "YYYY-MM"
+  price   Float
+  
+  stock   Stock  @relation(fields: [ticker], references: [ticker])
+  
+  @@unique([ticker, date])
+}
+
+model Dividend {
+  id        Int    @id @default(autoincrement())
+  ticker    String
+  year      Int
+  totalPaid Float
+  
+  stock     Stock  @relation(fields: [ticker], references: [ticker])
+
+  @@unique([ticker, year])
+}
