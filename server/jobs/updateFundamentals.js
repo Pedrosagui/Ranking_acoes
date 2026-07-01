@@ -1,5 +1,7 @@
 import https from 'https';
 
+const BRAPI_TOKENS = ['j9AenuWTpLNEGCKi8fbEwn', 'f12Ls945F82qawyN1YmvNA'];
+
 function parsePtBrNumber(str) {
   if (!str || str.trim() === '') return 0;
   const clean = str.replace(/\./g, '').replace(',', '.').replace('%', '').trim();
@@ -35,6 +37,46 @@ function fetchFundamentus() {
   });
 }
 
+// Busca P/L da Brapi em lote com fallback de token
+async function fetchBrapiPLBatch(tickers) {
+  if (tickers.length === 0) return {};
+  
+  const symbols = tickers.join(',');
+  let currentTokenIdx = 0;
+  let success = false;
+  let data = null;
+
+  while (currentTokenIdx < BRAPI_TOKENS.length && !success) {
+    try {
+      const token = BRAPI_TOKENS[currentTokenIdx];
+      const url = `https://brapi.dev/api/quote/${symbols}?token=${token}&fundamental=true`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Brapi HTTP ${res.status}`);
+      data = await res.json();
+      if (data.error) throw new Error(data.message || 'Brapi Error');
+      success = true;
+    } catch (err) {
+      console.warn(`[Brapi Validação] Falha com token ${currentTokenIdx}: ${err.message}. Tentando próximo...`);
+      currentTokenIdx++;
+    }
+  }
+  
+  if (!success) {
+    console.warn('[Brapi Validação] Todos os tokens falharam para validação.');
+    return {};
+  }
+  
+  const plMap = {};
+  if (data && data.results) {
+    data.results.forEach(item => {
+      if (item.priceEarnings !== undefined && item.priceEarnings !== null) {
+        plMap[item.symbol] = item.priceEarnings;
+      }
+    });
+  }
+  return plMap;
+}
+
 export async function updateFundamentals(prisma) {
   console.log('[Cron] Iniciando atualização de fundamentos (Fundamentus)...');
   
@@ -51,8 +93,9 @@ export async function updateFundamentals(prisma) {
     const tbody = html.substring(tbodyIdx, tbodyEndIdx);
     const rows = tbody.split(/<tr[^>]*>/i);
     
-    let processedCount = 0;
+    const parsedStocks = [];
     
+    // Passo 1: Extrair e organizar
     for (const row of rows) {
       if (!row.includes('<td')) continue;
       
@@ -68,14 +111,11 @@ export async function updateFundamentals(prisma) {
       if (!/^[A-Z]{4}(3|4|5|6|11)$/.test(ticker)) continue;
       if (ticker.startsWith('BDR')) continue;
       
+      const liquidez = parsePtBrNumber(tds[18]);
+      if (liquidez < 100000) continue;
+      
       const cotacao = parsePtBrNumber(tds[1]);
-      let pl = parsePtBrNumber(tds[2]);
-      
-      // Override manual para erros conhecidos do Fundamentus
-      if (ticker === 'TIMS3' && pl > 2000) {
-        pl = 12.08;
-      }
-      
+      const pl = parsePtBrNumber(tds[2]);
       const pvp = parsePtBrNumber(tds[3]);
       const psr = parsePtBrNumber(tds[4]);
       const divYield = parsePtBrNumber(tds[5]);
@@ -88,67 +128,109 @@ export async function updateFundamentals(prisma) {
       const liqCorr = parsePtBrNumber(tds[15]);
       const roic = parsePtBrNumber(tds[16]);
       const roe = parsePtBrNumber(tds[17]);
-      const liquidez = parsePtBrNumber(tds[18]);
       const divBrutaPatrim = parsePtBrNumber(tds[20]);
       const crescRec5a = parsePtBrNumber(tds[21]);
       
-      if (liquidez < 100000) continue;
+      parsedStocks.push({
+        ticker, cotacao, pl, pvp, psr, divYield, pEbit, pAtivo, evEbit, evEbitda, 
+        margemEbit, margemLiquida, liqCorr, roic, roe, divBrutaPatrim, crescRec5a, liquidez
+      });
+    }
+    
+    // Passo 2: Calcular Média e Desvio Padrão do P/L (ignorando extremos gigantescos do cálculo para não sujar a média)
+    const validPLs = parsedStocks.map(s => s.pl).filter(pl => pl > -500 && pl < 500); // Filta absurdos da amostra de estatística
+    const meanPL = validPLs.reduce((a, b) => a + b, 0) / (validPLs.length || 1);
+    const variancePL = validPLs.reduce((a, b) => a + Math.pow(b - meanPL, 2), 0) / (validPLs.length || 1);
+    const stdDevPL = Math.sqrt(variancePL);
+    
+    // Passo 3: Identificar Anomalias no P/L
+    const anomalousTickers = [];
+    parsedStocks.forEach(s => {
+      // É anomalia se for > 3 desvios padrões OU for hard limit
+      const zScore = stdDevPL > 0 ? Math.abs((s.pl - meanPL) / stdDevPL) : 0;
+      if (zScore > 3 || Math.abs(s.pl) > 1000) {
+        anomalousTickers.push(s.ticker);
+      }
+    });
+    
+    // Passo 4: Validar na Brapi
+    let brapiCorrections = {};
+    if (anomalousTickers.length > 0) {
+      console.log(`[Cron] ${anomalousTickers.length} anomalias detectadas no P/L. Validando na Brapi...`);
+      // Faz chunks de 1 para Brapi (Plano gratuito só aceita 1 por vez)
+      for (let i = 0; i < anomalousTickers.length; i += 1) {
+        const batch = anomalousTickers.slice(i, i + 1);
+        const results = await fetchBrapiPLBatch(batch);
+        brapiCorrections = { ...brapiCorrections, ...results };
+      }
+    }
+    
+    // Passo 5: Salvar no Banco
+    let processedCount = 0;
+    for (const s of parsedStocks) {
       
+      // Aplicar correção se houver
+      if (brapiCorrections[s.ticker] !== undefined) {
+        console.log(`[Correção] ${s.ticker}: P/L corrigido de ${s.pl} para ${brapiCorrections[s.ticker]}`);
+        s.pl = brapiCorrections[s.ticker];
+      }
+      
+      // Calcular LPA e VPA com o P/L e P/VP limpos
       let lpa = 0;
-      if (pl !== 0 && cotacao !== 0) {
-        lpa = cotacao / pl;
+      if (s.pl !== 0 && s.cotacao !== 0) {
+        lpa = s.cotacao / s.pl;
       }
       
       let vpa = 0;
-      if (pvp !== 0 && cotacao !== 0) {
-        vpa = cotacao / pvp;
+      if (s.pvp !== 0 && s.cotacao !== 0) {
+        vpa = s.cotacao / s.pvp;
       }
       
       await prisma.stock.upsert({
-        where: { ticker },
+        where: { ticker: s.ticker },
         update: {
-          cotacaoAtual: cotacao,
-          pl,
-          pvp,
-          psr,
-          divYield,
-          pEbit,
-          pAtivo,
-          evEbit,
-          evEbitda,
-          margemEbit,
-          margemLiquida,
-          liqCorr,
-          roic,
-          divBrutaPatrim,
-          crescRec5a,
+          cotacaoAtual: s.cotacao,
+          pl: s.pl,
+          pvp: s.pvp,
+          psr: s.psr,
+          divYield: s.divYield,
+          pEbit: s.pEbit,
+          pAtivo: s.pAtivo,
+          evEbit: s.evEbit,
+          evEbitda: s.evEbitda,
+          margemEbit: s.margemEbit,
+          margemLiquida: s.margemLiquida,
+          liqCorr: s.liqCorr,
+          roic: s.roic,
+          divBrutaPatrim: s.divBrutaPatrim,
+          crescRec5a: s.crescRec5a,
           lpa: parseFloat(lpa.toFixed(2)),
           vpa: parseFloat(vpa.toFixed(2)),
-          roe: parseFloat(roe.toFixed(2)),
+          roe: parseFloat(s.roe.toFixed(2)),
           updatedAt: new Date()
         },
         create: {
-          ticker,
-          empresa: `${ticker} S.A.`,
+          ticker: s.ticker,
+          empresa: `${s.ticker} S.A.`,
           setor: 'Mercado',
-          cotacaoAtual: cotacao,
-          pl,
-          pvp,
-          psr,
-          divYield,
-          pEbit,
-          pAtivo,
-          evEbit,
-          evEbitda,
-          margemEbit,
-          margemLiquida,
-          liqCorr,
-          roic,
-          divBrutaPatrim,
-          crescRec5a,
+          cotacaoAtual: s.cotacao,
+          pl: s.pl,
+          pvp: s.pvp,
+          psr: s.psr,
+          divYield: s.divYield,
+          pEbit: s.pEbit,
+          pAtivo: s.pAtivo,
+          evEbit: s.evEbit,
+          evEbitda: s.evEbitda,
+          margemEbit: s.margemEbit,
+          margemLiquida: s.margemLiquida,
+          liqCorr: s.liqCorr,
+          roic: s.roic,
+          divBrutaPatrim: s.divBrutaPatrim,
+          crescRec5a: s.crescRec5a,
           lpa: parseFloat(lpa.toFixed(2)),
           vpa: parseFloat(vpa.toFixed(2)),
-          roe: parseFloat(roe.toFixed(2))
+          roe: parseFloat(s.roe.toFixed(2))
         }
       });
       processedCount++;
