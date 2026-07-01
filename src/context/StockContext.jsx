@@ -1,7 +1,7 @@
 // src/context/StockContext.jsx
 // Context API: estado global do app, actions e inicialização
 
-import { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { syncAllStocks } from '../services/syncService';
 import { calcCompositeScore, PERFIS_SCORE } from '../utils/valuation';
 
