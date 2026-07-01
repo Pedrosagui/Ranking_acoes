@@ -8,6 +8,12 @@ function parsePtBrNumber(str) {
   return parseFloat(clean) || 0;
 }
 
+function clampExtreme(value) {
+  // Se o valor for absurdamente alto ou baixo (ex: -31023100.0% da OBTC3), forçamos para zero para não quebrar a UI
+  if (value > 10000 || value < -10000) return 0;
+  return value;
+}
+
 function fetchFundamentus() {
   return new Promise((resolve, reject) => {
     const options = {
@@ -118,18 +124,26 @@ export async function updateFundamentals(prisma) {
       const pl = parsePtBrNumber(tds[2]);
       const pvp = parsePtBrNumber(tds[3]);
       const psr = parsePtBrNumber(tds[4]);
-      const divYield = parsePtBrNumber(tds[5]);
+      let divYield = parsePtBrNumber(tds[5]);
       const pEbit = parsePtBrNumber(tds[6]);
       const pAtivo = parsePtBrNumber(tds[7]);
       const evEbit = parsePtBrNumber(tds[8]);
       const evEbitda = parsePtBrNumber(tds[9]);
-      const margemEbit = parsePtBrNumber(tds[13]);
-      const margemLiquida = parsePtBrNumber(tds[14]);
+      let margemEbit = parsePtBrNumber(tds[13]);
+      let margemLiquida = parsePtBrNumber(tds[14]);
       const liqCorr = parsePtBrNumber(tds[15]);
-      const roic = parsePtBrNumber(tds[16]);
-      const roe = parsePtBrNumber(tds[17]);
+      let roic = parsePtBrNumber(tds[16]);
+      let roe = parsePtBrNumber(tds[17]);
       const divBrutaPatrim = parsePtBrNumber(tds[20]);
-      const crescRec5a = parsePtBrNumber(tds[21]);
+      let crescRec5a = parsePtBrNumber(tds[21]);
+
+      // Aplica a limitação de extremos para campos que não temos validação da Brapi e vêm sujos do Fundamentus
+      divYield = clampExtreme(divYield);
+      margemEbit = clampExtreme(margemEbit);
+      margemLiquida = clampExtreme(margemLiquida);
+      roic = clampExtreme(roic);
+      roe = clampExtreme(roe);
+      crescRec5a = clampExtreme(crescRec5a);
       
       parsedStocks.push({
         ticker, cotacao, pl, pvp, psr, divYield, pEbit, pAtivo, evEbit, evEbitda, 
