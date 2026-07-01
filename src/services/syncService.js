@@ -35,9 +35,6 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
 
     // Enriquecer (calcular margens Bazin, Graham, etc)
     const enriched = dbStocks.map(s => {
-      // O banco já tem lpa, vpa, roe. Mas o enrichStock original 
-      // esperava que passássemos cotacao (ou logPrice)
-      const mockResultBrapi = {
       const precoAtual = s.cotacaoAtual || 10;
       const lpa = s.financialData?.lpa || 0;
       const vpa = s.financialData?.vpa || 0;
