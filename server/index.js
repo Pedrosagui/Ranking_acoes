@@ -3,11 +3,10 @@ import express from 'express';
 import cors from 'cors';
 import cron from 'node-cron';
 import pgPkg from 'pg';
-import adapterPkg from '@prisma/adapter-pg';
+import { PrismaPg } from '@prisma/adapter-pg';
 import prismaPkg from '@prisma/client';
 
 const { Pool } = pgPkg;
-const { PrismaPg } = adapterPkg;
 const { PrismaClient } = prismaPkg;
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
