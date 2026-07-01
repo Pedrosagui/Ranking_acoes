@@ -47,13 +47,13 @@ export function calcGraham(lpa, vpa) {
 }
 
 export function calcMargemBazin(precoTetoBazin, cotacaoAtual) {
-  if (!precoTetoBazin || precoTetoBazin <= 0) return -999;
-  return ((precoTetoBazin - cotacaoAtual) / precoTetoBazin) * 100;
+  if (!precoTetoBazin || precoTetoBazin <= 0 || !cotacaoAtual || cotacaoAtual <= 0) return -999;
+  return ((precoTetoBazin - cotacaoAtual) / cotacaoAtual) * 100;
 }
 
 export function calcMargemGraham(precoJustoGraham, cotacaoAtual) {
-  if (!precoJustoGraham || precoJustoGraham <= 0) return -999;
-  return ((precoJustoGraham - cotacaoAtual) / precoJustoGraham) * 100;
+  if (!precoJustoGraham || precoJustoGraham <= 0 || !cotacaoAtual || cotacaoAtual <= 0) return -999;
+  return ((precoJustoGraham - cotacaoAtual) / cotacaoAtual) * 100;
 }
 
 /**

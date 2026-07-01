@@ -93,7 +93,7 @@ export default function StockDetail({ stock, onClose }) {
             <div className="metric-value text-green">{stock.scoreComposto || stock.score} pts</div>
           </div>
           <div className="metric-card">
-            <div className="metric-title">Margem Graham</div>
+            <div className="metric-title">Upside Graham</div>
             <div className={`metric-value ${stock.margemGraham > 0 ? 'text-green' : 'text-red'}`}>
               {stock.margemGraham?.toFixed(1)}%
             </div>

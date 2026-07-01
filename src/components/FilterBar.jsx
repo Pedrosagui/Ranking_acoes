@@ -43,8 +43,8 @@ export default function FilterBar() {
         onChange={e => setFilter('ordenacao', e.target.value)}
       >
         <option value="score">Ordenar: Score Total</option>
-        <option value="margemBazin">Ordenar: Margem Bazin</option>
-        <option value="margemGraham">Ordenar: Margem Graham</option>
+        <option value="margemBazin">Ordenar: Upside Bazin</option>
+        <option value="margemGraham">Ordenar: Upside Graham</option>
         <option value="roe">Ordenar: ROE</option>
       </select>
 
