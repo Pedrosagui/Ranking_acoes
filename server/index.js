@@ -55,8 +55,8 @@ app.get('/api/stocks/:ticker/history', async (req, res) => {
 
 // --- ROTINAS (CRON JOBS) ---
 
-// Cron 1: Atualizar Cotações 3x ao dia (10:30, 14:00, 18:00) de segunda a sexta
-cron.schedule('30 10,14,18 * * 1-5', async () => {
+// Cron 1: Atualizar Cotações de hora em hora (10:00 às 18:00) de segunda a sexta
+cron.schedule('0 10-18 * * 1-5', async () => {
   console.log('Iniciando rotina de cotações...');
   await updateQuotes(prisma);
 });
