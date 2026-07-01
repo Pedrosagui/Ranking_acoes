@@ -36,9 +36,6 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
     // Enriquecer (calcular margens Bazin, Graham, etc)
     const enriched = dbStocks.map(s => {
       const precoAtual = s.cotacaoAtual || 10;
-      const lpa = s.financialData?.lpa || 0;
-      const vpa = s.financialData?.vpa || 0;
-      const roe = s.financialData?.roe || 0;
 
       // Chama a função central do valuation que calcula Score 0-100, Bazin e Graham reais
       return enrichStock({
@@ -46,9 +43,9 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
         empresa: s.empresa,
         setor: s.setor,
         cotacaoAtual: precoAtual,
-        lpa,
-        vpa,
-        roe,
+        lpa: s.lpa || 0,
+        vpa: s.vpa || 0,
+        roe: s.roe || 0,
         dividendosHistoricos: s.dividendHistory,
         pl: s.pl || 0,
         crescRec5a: s.crescRec5a || 0,
