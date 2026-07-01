@@ -1,6 +1,6 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { getHistorico } from '../data/historico5anos';
-import { AreaChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
+import { ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
 function calcInvestmentSimulation(stockHistory, ibovHistory) {
   if (!stockHistory || stockHistory.length < 2) return { data: [], finalStock: 0, finalIbov: 0, finalCdi: 0 };
@@ -147,7 +147,7 @@ export default function StockDetail({ stock, onClose }) {
 
             <div style={{ width: '100%', height: '300px' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={simulation.data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <ComposedChart data={simulation.data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorStock" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
@@ -172,10 +172,10 @@ export default function StockDetail({ stock, onClose }) {
                   <Tooltip content={<CustomTooltip />} />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
                   
-                  <Line type="monotone" dataKey="cdiValue" name="100% CDI" stroke="var(--text-muted)" strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
-                  <Line type="monotone" dataKey="ibovValue" name="IBOVESPA" stroke="var(--text-primary)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="cdiValue" name="100% CDI" stroke="var(--text-primary)" strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
+                  <Line type="monotone" dataKey="ibovValue" name="IBOVESPA" stroke="var(--green)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
                   <Area type="monotone" dataKey="stockValue" name={stock.ticker} stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorStock)" activeDot={{ r: 6, strokeWidth: 0, fill: 'var(--primary)' }} />
-                </AreaChart>
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </div>

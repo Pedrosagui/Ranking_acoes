@@ -162,7 +162,8 @@ function calcPilar5(stock, percentilEarningYield) {
 
 // ======================== MOTOR PRINCIPAL ========================
 
-export function calcCompositeScore(stocks, pesos = PERFIS_SCORE.equilibrado.pesos) {
+export function calcCompositeScore(stocks, perfil = PERFIS_SCORE.equilibrado) {
+  const pesos = perfil.pesos;
   const validos = stocks.filter(passaFiltrosEliminatorios);
   const eliminados = stocks
     .filter(s => !passaFiltrosEliminatorios(s))
@@ -202,7 +203,7 @@ export function calcCompositeScore(stocks, pesos = PERFIS_SCORE.equilibrado.peso
     const s5 = calcPilar5(stock, percentilEY);
     
     let scoreComposto = 0;
-    if (pesos.isPiotroski) {
+    if (perfil.isPiotroski) {
       scoreComposto = Math.round((stock.fScore / 9) * 100);
     } else {
       scoreComposto = Math.round(

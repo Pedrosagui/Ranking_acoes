@@ -37,7 +37,7 @@ function stockReducer(state, action) {
       const existing = state.stocks.filter(
         s => !action.payload.find(n => n.ticker === s.ticker)
       );
-      const merged = calcCompositeScore([...existing, ...action.payload], PERFIS_SCORE[state.activeProfile].pesos);
+      const merged = calcCompositeScore([...existing, ...action.payload], PERFIS_SCORE[state.activeProfile]);
       return { ...state, stocks: merged };
     }
 
@@ -45,7 +45,7 @@ function stockReducer(state, action) {
       return { 
         ...state, 
         activeProfile: action.payload,
-        stocks: calcCompositeScore(state.stocks, PERFIS_SCORE[action.payload].pesos)
+        stocks: calcCompositeScore(state.stocks, PERFIS_SCORE[action.payload])
       };
 
     case 'SET_ERROR':
@@ -78,7 +78,7 @@ export function StockProvider({ children }) {
       try {
         const enriched = await syncAllStocks();
         if (enriched.length > 0) {
-          dispatch({ type: 'SET_STOCKS', payload: calcCompositeScore(enriched, PERFIS_SCORE['equilibrado'].pesos) });
+          dispatch({ type: 'SET_STOCKS', payload: calcCompositeScore(enriched, PERFIS_SCORE['equilibrado']) });
         }
       } catch (err) {
         dispatch({ type: 'SET_ERROR', payload: 'Erro ao carregar dados: ' + err.message });

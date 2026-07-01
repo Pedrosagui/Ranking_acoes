@@ -35,30 +35,7 @@ function StatusIndicator({ value, thresholds, inverse = false }) {
   return <span className={colorClass} style={{ fontWeight: 500 }}>{value}</span>;
 }
 
-function Top10Chart({ stocks, title, scoreField, scoreSuffix = 'pts' }) {
-  const top10 = stocks.slice(0, 10);
-  
-  return (
-    <div className="card desktop-only">
-      <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '24px' }}>{title}</h3>
-      <div className="top10-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
-        {top10.map((stock, i) => (
-          <div key={stock.ticker} className="metric-card" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>#{i + 1} &middot; {stock.setor?.substring(0, 15)}</div>
-              <div className="metric-value text-green" style={{ fontSize: '18px' }}>
-                <span className="status-dot status-green"></span>
-                {stock[scoreField]}
-              </div>
-            </div>
-            <div style={{ fontSize: '20px', fontWeight: 600 }}>{stock.ticker}</div>
-            <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>R$ {stock.cotacaoAtual?.toFixed(2)}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+
 
 const ITEMS_PER_PAGE = 30;
 
@@ -212,8 +189,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {currentPage === 1 && searchQuery === '' && filteredStocks.length > 0 && <Top10Chart stocks={filteredStocks} title={`Top 10 — Ranking ${PERFIS_SCORE[activeProfile]?.label || 'Valuation'}`} scoreField="scoreComposto" scoreSuffix="pts" />}
-        
         {/* Desktop Table */}
         <div className="table-container desktop-only">
           <table className="valuation-table">
