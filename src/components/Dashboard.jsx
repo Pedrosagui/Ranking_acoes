@@ -53,28 +53,30 @@ function Top10Chart({ stocks }) {
 }
 
 export default function Dashboard() {
-  const { filteredStocks, stocks, isLoading, isSyncing, syncAll } = useStocks();
+  const { filteredStocks, stocks, isLoading, isSyncing, error } = useStocks();
   const [showSettings, setShowSettings] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
 
-  if (isLoading) return <LoadingState />;
-  if (stocks.length === 0 && !isSyncing) return <EmptyState onSync={syncAll} />;
+  if (isLoading || (isSyncing && stocks.length === 0)) return <LoadingState />;
 
   return (
     <div className="app-container">
       <header className="header">
-        <h1>ValorB3</h1>
+        <h1>Aegis</h1>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button className="btn btn-outline" onClick={() => setShowSettings(true)}>
             Configurações
           </button>
-          <button className="btn btn-primary" onClick={syncAll} disabled={isSyncing}>
-            {isSyncing ? 'Sincronizando...' : 'Sincronizar'}
-          </button>
         </div>
       </header>
 
-      <SyncProgressBar />
+      {error && (
+        <div style={{ background: '#ff444420', color: '#ff4444', padding: '12px', margin: '16px', borderRadius: '4px' }}>
+          {error}
+        </div>
+      )}
+
+      {isSyncing && stocks.length > 0 && <SyncProgressBar />}
 
       {filteredStocks.length > 0 && <Top10Chart stocks={filteredStocks} />}
 
