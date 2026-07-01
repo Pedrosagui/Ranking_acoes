@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useStocks } from '../context/StockContext';
 import SyncProgressBar from './SyncProgressBar';
 import StockDetail from './StockDetail';
-import { rankPiotroskiGraham, rankTechPegRatio } from '../utils/valuation';
+import { rankPiotroskiGraham } from '../utils/valuation';
 
 function LoadingState() {
   return (
@@ -37,6 +37,24 @@ function Top10Chart({ stocks, title, scoreField, scoreSuffix = 'pts' }) {
   );
 }
 
+function StockLogo({ ticker }) {
+  const letter = ticker.charAt(0).toUpperCase();
+  const colors = ['#e53935', '#d81b60', '#8e24aa', '#5e35b1', '#3949ab', '#1e88e5', '#039be5', '#00acc1', '#00897b', '#43a047', '#f4511e'];
+  const colorIndex = ticker.charCodeAt(0) % colors.length;
+  const bgColor = colors[colorIndex];
+  
+  return (
+    <div style={{ 
+      width: '28px', height: '28px', borderRadius: '50%', 
+      backgroundColor: bgColor, color: 'white', 
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontWeight: 'bold', fontSize: '14px', flexShrink: 0
+    }}>
+      {letter}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { filteredStocks, stocks, isLoading, isSyncing, error } = useStocks();
   const [activeTab, setActiveTab] = useState('graham_bazin');
@@ -50,32 +68,53 @@ export default function Dashboard() {
     <>
       {filteredStocks.length > 0 && <Top10Chart stocks={filteredStocks} title="Top 10 — Ranking Valuation" scoreField="score" />}
       <div className="table-container">
-        <table>
+        <table className="valuation-table">
           <thead>
             <tr>
               <th>Rank</th>
               <th>Ticker</th>
               <th>Cotação</th>
-              <th>LPA</th>
-              <th>VPA</th>
+              <th>Dividend<br/>Yield</th>
+              <th>P/L</th>
+              <th>Margem<br/>Líquida</th>
               <th>ROE</th>
-              <th>Margem Graham</th>
-              <th>Score</th>
+              <th>Dív. Bruta /<br/>Patrim.</th>
+              <th style={{ backgroundColor: '#fceb8d', color: '#333' }}>Valuation<br/>Bazin</th>
+              <th style={{ backgroundColor: '#8bbcf6', color: '#333' }}>Valuation<br/>Graham</th>
+              <th style={{ backgroundColor: '#f18a70', color: '#fff' }}>Score<br/>Valuation</th>
             </tr>
           </thead>
           <tbody>
             {filteredStocks.map((stock, index) => (
               <tr key={stock.ticker} onClick={() => setSelectedStock(stock)}>
-                <td>#{index + 1}</td>
-                <td className="ticker-name">{stock.ticker}</td>
-                <td>R$ {stock.cotacaoAtual?.toFixed(2) || 'N/A'}</td>
-                <td>R$ {stock.lpa?.toFixed(2) || 'N/A'}</td>
-                <td>R$ {stock.vpa?.toFixed(2) || 'N/A'}</td>
-                <td>{stock.roe?.toFixed(1) || 'N/A'}%</td>
-                <td className={stock.margemGraham > 0 ? 'text-green' : 'text-red'}>
-                  {stock.margemGraham?.toFixed(1)}%
+                <td style={{ color: index < 3 ? 'var(--text-yellow)' : 'inherit' }}>
+                  {index < 3 ? '★' : ''} #{index + 1}
                 </td>
-                <td style={{ fontWeight: 'bold' }}>{stock.score}</td>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <StockLogo ticker={stock.ticker} />
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <span style={{ fontWeight: 'bold', color: 'var(--text-blue, #64a1ff)' }}>{stock.ticker}</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{stock.empresa?.substring(0, 15)}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>R$ {stock.cotacaoAtual?.toFixed(2) || 'N/A'}</td>
+                <td>{stock.divYield?.toFixed(1) || '0.0'}%</td>
+                <td>{stock.pl?.toFixed(2) || 'N/A'}</td>
+                <td>{stock.margemLiquida?.toFixed(1) || '0.0'}%</td>
+                <td>{stock.roe?.toFixed(1) || 'N/A'}%</td>
+                <td>{stock.divBrutaPatrim?.toFixed(2) || 'N/A'}</td>
+                
+                <td style={{ backgroundColor: '#fceb8d20', color: '#fceb8d' }}>
+                  R$ {stock.precoTetoBazin?.toFixed(2) || '0.00'}
+                </td>
+                <td style={{ backgroundColor: '#8bbcf620', color: '#8bbcf6' }}>
+                  R$ {stock.precoJustoGraham?.toFixed(2) || '0.00'}
+                </td>
+                <td style={{ backgroundColor: '#f18a7020', color: '#f18a70', fontWeight: 'bold' }}>
+                  {stock.score}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -88,27 +127,44 @@ export default function Dashboard() {
     <>
       {piotroskiStocks.length > 0 && <Top10Chart stocks={piotroskiStocks} title="Top 10 — Graham + Piotroski" scoreField="fScore" scoreSuffix="F-Score" />}
       <div className="table-container">
-        <table>
+        <table className="valuation-table">
           <thead>
             <tr>
               <th>Rank</th>
               <th>Ticker</th>
               <th>Cotação</th>
-              <th>Margem Graham</th>
-              <th>F-Score (0-9)</th>
+              <th>ROE</th>
+              <th>Liq. Corr.</th>
+              <th>Dív. Bruta /<br/>Patrim.</th>
+              <th style={{ backgroundColor: '#8bbcf6', color: '#333' }}>Valuation<br/>Graham</th>
+              <th style={{ backgroundColor: '#4caf50', color: '#fff' }}>Piotroski<br/>F-Score</th>
             </tr>
           </thead>
           <tbody>
             {piotroskiStocks.map((stock, index) => (
               <tr key={stock.ticker} onClick={() => setSelectedStock(stock)}>
-                <td>#{index + 1}</td>
-                <td className="ticker-name">{stock.ticker}</td>
-                <td>R$ {stock.cotacaoAtual?.toFixed(2) || 'N/A'}</td>
-                <td className={stock.margemGraham > 0 ? 'text-green' : 'text-red'}>
-                  {stock.margemGraham?.toFixed(1)}%
+                <td style={{ color: index < 3 ? 'var(--text-yellow)' : 'inherit' }}>
+                  {index < 3 ? '★' : ''} #{index + 1}
                 </td>
-                <td style={{ fontWeight: 'bold', color: stock.fScore >= 7 ? 'var(--text-green)' : 'inherit' }}>
-                  {stock.fScore}
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <StockLogo ticker={stock.ticker} />
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <span style={{ fontWeight: 'bold', color: 'var(--text-blue, #64a1ff)' }}>{stock.ticker}</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{stock.empresa?.substring(0, 15)}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>R$ {stock.cotacaoAtual?.toFixed(2) || 'N/A'}</td>
+                <td>{stock.roe?.toFixed(1) || 'N/A'}%</td>
+                <td>{stock.liqCorr?.toFixed(2) || 'N/A'}</td>
+                <td>{stock.divBrutaPatrim?.toFixed(2) || 'N/A'}</td>
+                
+                <td style={{ backgroundColor: '#8bbcf620', color: '#8bbcf6' }}>
+                  R$ {stock.precoJustoGraham?.toFixed(2) || '0.00'}
+                </td>
+                <td style={{ backgroundColor: '#4caf5020', color: '#4caf50', fontWeight: 'bold' }}>
+                  {stock.fScore} / 9
                 </td>
               </tr>
             ))}

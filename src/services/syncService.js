@@ -58,7 +58,8 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
         liqCorr: s.liqCorr || 0,
         margemLiquida: s.margemLiquida || 0,
         divBrutaPatrim: s.divBrutaPatrim || 0,
-        margemEbit: s.margemEbit || 0
+        margemEbit: s.margemEbit || 0,
+        divYield: s.divYield || 0
       });
     });
 
