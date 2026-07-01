@@ -2,11 +2,14 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cron from 'node-cron';
-import pkg from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '@prisma/client';
+import pgPkg from 'pg';
+import adapterPkg from '@prisma/adapter-pg';
+import prismaPkg from '@prisma/client';
 
-const { Pool } = pkg;
+const { Pool } = pgPkg;
+const { PrismaPg } = adapterPkg;
+const { PrismaClient } = prismaPkg;
+
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
