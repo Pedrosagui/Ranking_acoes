@@ -1,0 +1,29 @@
+{
+  "results": [
+    {
+      "symbol": "TIMS3",
+      "shortName": "TIMS3",
+      "longName": "TIM S.A.",
+      "currency": "BRL",
+      "regularMarketPrice": 21.76,
+      "regularMarketDayHigh": 21.81,
+      "regularMarketDayLow": 21.52,
+      "regularMarketDayRange": "21.52 - 21.81",
+      "regularMarketChange": -0.11,
+      "regularMarketChangePercent": -0.5,
+      "regularMarketTime": "2026-07-01T13:41:30.000Z",
+      "marketCap": 52315530147,
+      "regularMarketVolume": 274400,
+      "regularMarketPreviousClose": 21.76,
+      "regularMarketOpen": 21.66,
+      "fiftyTwoWeekRange": "19.56 - 28.74",
+      "fiftyTwoWeekLow": 19.56,
+      "fiftyTwoWeekHigh": 28.74,
+      "priceEarnings": 12.093591952425944,
+      "earningsPerShare": 1.7995153,
+      "logourl": "https://icons.brapi.dev/icons/TIMS3.svg"
+    }
+  ],
+  "requestedAt": "2026-07-01T13:42:16.022Z",
+  "took": 124
+}

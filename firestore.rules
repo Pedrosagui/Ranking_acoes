@@ -1,0 +1,40 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Regra Padrão: nega tudo que não tiver regra explícita
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Coleção: Users
+    // Um usuário só pode ler e escrever os dados do seu próprio perfil
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Sub-coleção: Carteiras
+      // Um usuário só pode ler e alterar suas próprias carteiras
+      match /carteiras/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Coleção: Coupons (Cupons de Plano Pro)
+    match /coupons/{couponId} {
+      // Qualquer usuário logado pode ler os cupons para tentar resgatar
+      allow read: if request.auth != null;
+      
+      // Permitir update APENAS SE:
+      // 1. O usuário estiver logado
+      // 2. O cupom ainda não tiver sido usado (resource.data.usedBy == null)
+      // 3. O usuário estiver gravando o seu próprio UID no campo usedBy
+      allow update: if request.auth != null 
+                    && resource.data.usedBy == null 
+                    && request.resource.data.usedBy == request.auth.uid;
+                    
+      // Usuários não podem criar ou deletar cupons (só Admin pelo console do Firebase)
+      allow create, delete: if false;
+    }
+  }
+}

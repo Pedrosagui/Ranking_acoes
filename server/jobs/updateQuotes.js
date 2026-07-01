@@ -43,7 +43,14 @@ export async function updateQuotes(prisma) {
   
   try {
     const stocks = await prisma.stock.findMany({ select: { ticker: true } });
-    const tickers = stocks.map(s => s.ticker);
+    const fiis = await prisma.fii.findMany({ select: { ticker: true } });
+    const etfs = await prisma.etf.findMany({ select: { ticker: true } });
+    
+    const allItems = [
+      ...stocks.map(s => ({ ticker: s.ticker, model: 'stock' })),
+      ...fiis.map(s => ({ ticker: s.ticker, model: 'fii' })),
+      ...etfs.map(s => ({ ticker: s.ticker, model: 'etf' }))
+    ];
     
     // Brapi plano gratuito aceita apenas 1 ticker por requisição
     const BATCH_SIZE = 1;
@@ -52,10 +59,11 @@ export async function updateQuotes(prisma) {
     let currentTokenIdx = 0;
     let usingYahooFallback = false;
     
-    for (let i = 0; i < tickers.length; i += CONCURRENCY) {
-      const chunk = tickers.slice(i, i + CONCURRENCY);
+    for (let i = 0; i < allItems.length; i += CONCURRENCY) {
+      const chunk = allItems.slice(i, i + CONCURRENCY);
       
-      const promises = chunk.map(async (ticker) => {
+      const promises = chunk.map(async (item) => {
+        const { ticker, model } = item;
         const batch = [ticker];
         let price = null;
         
@@ -83,7 +91,7 @@ export async function updateQuotes(prisma) {
         }
         
         if (price) {
-          await prisma.stock.update({
+          await prisma[model].update({
             where: { ticker },
             data: { cotacaoAtual: price }
           });
@@ -91,11 +99,11 @@ export async function updateQuotes(prisma) {
       });
       
       await Promise.all(promises);
-      console.log(`✅ Cotações atualizadas: ${Math.min(i + CONCURRENCY, tickers.length)} / ${tickers.length}`);
+      console.log(`✅ Cotações atualizadas: ${Math.min(i + CONCURRENCY, allItems.length)} / ${allItems.length}`);
     }
     
     console.log('🏁 Atualização de cotações concluída!');
-    return { success: true, count: tickers.length, method: usingYahooFallback ? 'Yahoo' : 'Brapi' };
+    return { success: true, count: allItems.length, method: usingYahooFallback ? 'Yahoo' : 'Brapi' };
     
   } catch (error) {
     console.error('❌ Erro na rotina de cotações:', error);

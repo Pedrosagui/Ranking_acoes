@@ -7,62 +7,62 @@ datasource db {
 }
 
 model Stock {
-  ticker            String    @id
-  empresa           String
-  setor             String
-  logoUrl           String?
-  
+  ticker  String  @id
+  empresa String
+  setor   String
+  logoUrl String?
+
   // Indicadores Básicos
-  cotacaoAtual      Float?
-  lpa               Float?
-  vpa               Float?
-  
+  cotacaoAtual Float?
+  lpa          Float?
+  vpa          Float?
+
   // Indicadores de Valuation (Fundamentus)
-  pl                Float?
-  pvp               Float?
-  psr               Float?
-  divYield          Float?
-  pAtivo            Float?
-  pCapGiro          Float?
-  pEbit             Float?
-  pAtivCircLiq      Float?
-  evEbit            Float?
-  evEbitda          Float?
+  pl           Float?
+  pvp          Float?
+  psr          Float?
+  divYield     Float?
+  pAtivo       Float?
+  pCapGiro     Float?
+  pEbit        Float?
+  pAtivCircLiq Float?
+  evEbit       Float?
+  evEbitda     Float?
 
   // Indicadores de Rentabilidade
-  margemEbit        Float?
-  margemLiquida     Float?
-  roic              Float?
-  roe               Float?
-  
+  margemEbit    Float?
+  margemLiquida Float?
+  roic          Float?
+  roe           Float?
+
   // Indicadores de Liquidez e Endividamento
   liqCorr           Float?
   liq2Meses         Float?
   patrimonioLiquido Float?
   divBrutaPatrim    Float?
   crescRec5a        Float?
-  
+
   // Campos para os Filtros Futuros
-  pegRatio          Float?
-  fScore            Int?
-  financialData     Json?     // Armazena DRE/Balanço puro (útil para calcular o F-Score detalhado depois)
-  historicalFinancials Json?  // Histórico de balanços para cálculos como Piotroski F-Score (comparação YoY)
-  dividendHistory   Json?     // Armazena o histórico de dividendos (ex: [{ano: 2024, totalPago: 1.5}])
-  
-  updatedAt         DateTime  @updatedAt
-  
-  historico         History[]
-  dividendos        Dividend[]
+  pegRatio             Float?
+  fScore               Int?
+  financialData        Json? // Armazena DRE/Balanço puro (útil para calcular o F-Score detalhado depois)
+  historicalFinancials Json? // Histórico de balanços para cálculos como Piotroski F-Score (comparação YoY)
+  dividendHistory      Json? // Armazena o histórico de dividendos (ex: [{ano: 2024, totalPago: 1.5}])
+
+  updatedAt DateTime @updatedAt
+
+  historico  History[]
+  dividendos Dividend[]
 }
 
 model History {
-  id      Int    @id @default(autoincrement())
-  ticker  String
-  date    String // "YYYY-MM-DD" or "YYYY-MM"
-  price   Float
-  
-  stock   Stock  @relation(fields: [ticker], references: [ticker])
-  
+  id     Int    @id @default(autoincrement())
+  ticker String
+  date   String // "YYYY-MM-DD" or "YYYY-MM"
+  price  Float
+
+  stock Stock @relation(fields: [ticker], references: [ticker])
+
   @@unique([ticker, date])
 }
 
@@ -71,8 +71,41 @@ model Dividend {
   ticker    String
   year      Int
   totalPaid Float
-  
-  stock     Stock  @relation(fields: [ticker], references: [ticker])
+
+  stock Stock @relation(fields: [ticker], references: [ticker])
 
   @@unique([ticker, year])
+}
+
+model Fii {
+  ticker      String @id
+  nome        String
+  segmento    String
+  gestora     String
+  numCotistas Int?
+
+  // Dados din�micos da API
+  cotacaoAtual         Float?
+  divYield             Float?
+  pvp                  Float?
+  liquidezMedia        Float?
+  valorPatrimonialCota Float?
+  dividendHistory      Json?
+
+  updatedAt DateTime @updatedAt
+}
+
+model Etf {
+  ticker    String @id
+  nome      String
+  benchmark String
+  taxaAdm   Float?
+  gestora   String
+  numAtivos Int?
+
+  // Dados din�micos da API
+  cotacaoAtual     Float?
+  rentabilidade12m Float?
+
+  updatedAt DateTime @updatedAt
 }

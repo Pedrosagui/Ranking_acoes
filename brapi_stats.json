@@ -1,0 +1,5 @@
+{
+  "error": true,
+  "message": "Os módulos a seguir não estão disponíveis no seu plano: defaultKeyStatistics. Módulos permitidos: summaryProfile. Faça upgrade em brapi.dev/dashboard para acessar módulos adicionais.",
+  "code": "MODULES_NOT_AVAILABLE"
+}

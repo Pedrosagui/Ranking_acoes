@@ -683,3 +683,71 @@ select.vercel-select:focus {
     color: var(--text-primary);
   }
 }
+
+
+/* Portfolio Page Styles */
+.portfolio-summary-card {
+  background: var(--bg-surface);
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.portfolio-summary-grid {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.summary-label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.summary-value {
+  font-size: 28px;
+  font-weight: 700;
+  display: flex;
+  align-items: baseline;
+}
+.portfolio-highlights {
+  display: flex;
+  gap: 16px;
+  border-top: 1px solid var(--border-light);
+  padding-top: 16px;
+  font-size: 14px;
+}
+.highlight-green {
+  color: var(--green);
+  font-weight: 500;
+}
+.highlight-red {
+  color: var(--red);
+  font-weight: 500;
+}
+.portfolio-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  align-items: center;
+}
+.import-steps {
+  line-height: 1.8;
+  margin-bottom: 24px;
+  padding-left: 20px;
+}
+.drop-zone {
+  border: 2px dashed var(--border-strong);
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  background: var(--bg-app);
+}
+.drop-zone-active {
+  border-color: var(--primary);
+  background: var(--secondary-bg);
+}
