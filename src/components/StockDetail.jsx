@@ -118,6 +118,34 @@ export default function StockDetail({ stock, onClose }) {
           </>
         )}
 
+        <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px' }}>Indicadores Fundamentalistas</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px', marginBottom: '32px' }}>
+          <div className="metric-card" style={{ padding: '12px' }}>
+            <div className="metric-title" style={{ fontSize: '11px' }}>Div. Yield</div>
+            <div style={{ fontSize: '16px', fontWeight: 600 }}>{stock.divYield?.toFixed(1) || '0.0'}%</div>
+          </div>
+          <div className="metric-card" style={{ padding: '12px' }}>
+            <div className="metric-title" style={{ fontSize: '11px' }}>P/L</div>
+            <div style={{ fontSize: '16px', fontWeight: 600 }}>{stock.pl?.toFixed(2) || '0.00'}</div>
+          </div>
+          <div className="metric-card" style={{ padding: '12px' }}>
+            <div className="metric-title" style={{ fontSize: '11px' }}>M. Líquida</div>
+            <div style={{ fontSize: '16px', fontWeight: 600 }}>{stock.margemLiquida?.toFixed(1) || '0.0'}%</div>
+          </div>
+          <div className="metric-card" style={{ padding: '12px' }}>
+            <div className="metric-title" style={{ fontSize: '11px' }}>ROE</div>
+            <div style={{ fontSize: '16px', fontWeight: 600 }}>{stock.roe?.toFixed(1) || '0.0'}%</div>
+          </div>
+          <div className="metric-card" style={{ padding: '12px' }}>
+            <div className="metric-title" style={{ fontSize: '11px' }}>Alavancagem</div>
+            <div style={{ fontSize: '16px', fontWeight: 600 }}>{stock.divBrutaPatrim?.toFixed(2) || '0.00'}</div>
+          </div>
+          <div className="metric-card" style={{ padding: '12px' }}>
+            <div className="metric-title" style={{ fontSize: '11px' }}>VPA</div>
+            <div style={{ fontSize: '16px', fontWeight: 600 }}>R$ {stock.vpa?.toFixed(2) || '0.00'}</div>
+          </div>
+        </div>
+
         <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px' }}>Gráfico de Preços (Últimos 5 Anos)</h3>
         <div className="chart-container">
           {history.length > 0 ? (
