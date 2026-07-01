@@ -422,6 +422,34 @@ select.vercel-select:focus {
   border-color: #111 transparent transparent transparent;
 }
 
+/* Utilities */
+.desktop-only { display: block; }
+.mobile-only { display: none; }
+.pb-mobile { padding-bottom: 0; }
+
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 16px 0;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.sync-footer {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: center;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .app-wrapper {
@@ -430,33 +458,9 @@ select.vercel-select:focus {
     min-height: 100vh;
   }
 
-  .sidebar {
-    width: 100%;
-    padding: 16px;
-    border-right: none;
-    border-bottom: 1px solid var(--border-light);
-    flex-direction: column;
-  }
-
-  .sidebar-logo {
-    margin-bottom: 16px;
-  }
-
-  .sidebar-menu {
-    flex-direction: row;
-    overflow-x: auto;
-    white-space: nowrap;
-    padding-bottom: 8px;
-    width: 100%;
-  }
-
-  .sidebar-item {
-    flex-shrink: 0;
-  }
-
-  .sidebar-menu > div[style*="margin"] {
-    display: none; /* Hide dividers */
-  }
+  .desktop-only { display: none !important; }
+  .mobile-only { display: flex !important; }
+  .pb-mobile { padding-bottom: 80px; } /* Space for bottom nav */
 
   .header {
     padding: 0 16px;
@@ -476,15 +480,9 @@ select.vercel-select:focus {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
   }
 
-  .valuation-table th, 
-  .valuation-table td {
-    padding: 12px 8px;
-    font-size: 12px;
-    white-space: nowrap;
-  }
-
   .modal-overlay {
     padding: 12px;
+    z-index: 1000;
   }
 
   .modal-content {
@@ -493,5 +491,176 @@ select.vercel-select:focus {
   
   .pilares-grid {
     grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Bottom Navigation Bar */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 50;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 500;
+    width: 33%;
+    height: 100%;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .bottom-nav-item.active {
+    color: var(--primary);
+  }
+
+  .bottom-nav-item svg {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 2px;
+  }
+
+  /* Mobile Card List */
+  .mobile-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mobile-card {
+    background: var(--bg-surface);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+  }
+
+  .mobile-card-indicator {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .mobile-card-content {
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .mobile-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .mobile-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .mobile-card-price {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .mobile-card-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .mobile-card-score-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 4px;
+  }
+
+  .mobile-card-score-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 60px;
+  }
+
+  .mobile-card-progress-track {
+    flex: 1;
+    height: 6px;
+    background: #F0F0F0;
+    border-radius: 4px;
+    position: relative;
+    overflow: visible;
+  }
+
+  .mobile-card-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    position: relative;
+  }
+
+  .mobile-card-progress-dot {
+    position: absolute;
+    right: -6px;
+    top: -3px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--green);
+    border: 2px solid var(--bg-surface);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  
+  .mobile-card-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-light);
+  }
+  
+  .mobile-card-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .mobile-card-stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  
+  .mobile-card-stat-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
   }
 }

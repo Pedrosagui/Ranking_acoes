@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStocks } from '../context/StockContext';
 import SyncProgressBar from './SyncProgressBar';
 import StockDetail from './StockDetail';
-import SettingsModal from './SettingsModal';
 import { rankPiotroskiGraham, PERFIS_SCORE } from '../utils/valuation';
 
 // --- SVGs for Icons (Vercel Style) ---
 const IconOverview = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>;
 const IconValuation = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>;
 const IconSpeed = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>;
-const IconSettings = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
 const IconLogo = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
 
 const Tooltip = ({ children, text }) => (
@@ -49,7 +47,7 @@ function Top10Chart({ stocks, title, scoreField, scoreSuffix = 'pts' }) {
   const top10 = stocks.slice(0, 10);
   
   return (
-    <div className="card">
+    <div className="card desktop-only">
       <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '24px' }}>{title}</h3>
       <div className="top10-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
         {top10.map((stock, i) => (
@@ -70,142 +68,276 @@ function Top10Chart({ stocks, title, scoreField, scoreSuffix = 'pts' }) {
   );
 }
 
+const ITEMS_PER_PAGE = 30;
+
 export default function Dashboard() {
-  const { filteredStocks, stocks, isLoading, isSyncing, error, activeProfile, setProfile } = useStocks();
+  const { filteredStocks, stocks, isLoading, isSyncing, error, activeProfile, setProfile, syncAll } = useStocks();
   const [activeTab, setActiveTab] = useState('graham_bazin');
   const [selectedStock, setSelectedStock] = useState(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, activeProfile, filteredStocks.length]);
 
   if (isLoading || (isSyncing && stocks.length === 0)) return <LoadingState />;
 
   const piotroskiStocks = rankPiotroskiGraham(stocks);
 
-  const renderGrahamBazin = () => (
-    <>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Perfil:</span>
-          <select 
-            className="vercel-select"
-            value={activeProfile} 
-            onChange={(e) => setProfile(e.target.value)}
-          >
-            {Object.entries(PERFIS_SCORE).map(([key, perfil]) => (
-              <option key={key} value={key}>{perfil.label}</option>
-            ))}
-          </select>
+  const renderPagination = (totalItems) => {
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+    if (totalPages <= 1) return null;
+    return (
+      <div className="pagination-controls">
+        <button 
+          className="btn btn-ghost" 
+          disabled={currentPage === 1} 
+          onClick={() => {
+            setCurrentPage(p => p - 1);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}>
+          Anterior
+        </button>
+        <span className="pagination-info">Página {currentPage} de {totalPages}</span>
+        <button 
+          className="btn btn-ghost" 
+          disabled={currentPage === totalPages} 
+          onClick={() => {
+            setCurrentPage(p => p + 1);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}>
+          Próxima
+        </button>
+      </div>
+    );
+  };
+
+  const MobileCard = ({ stock, scoreField, index }) => {
+    const score = stock[scoreField] || 0;
+    const maxScore = scoreField === 'fScore' ? 9 : 100;
+    const percent = Math.min(100, Math.max(0, Math.round((score / maxScore) * 100)));
+    
+    // Superpower style gradient and indicator
+    let dotColor = 'var(--yellow)';
+    let gradient = 'linear-gradient(90deg, #F5A62340 0%, #F5A623 100%)';
+    if (percent >= 70) {
+      dotColor = 'var(--green)';
+      gradient = 'linear-gradient(90deg, #16A34A40 0%, #16A34A 100%)';
+    } else if (percent <= 40) {
+      dotColor = 'var(--red)';
+      gradient = 'linear-gradient(90deg, #E0000040 0%, #E00000 100%)';
+    }
+
+    return (
+      <div className="mobile-card" onClick={() => setSelectedStock(stock)}>
+        <div className="mobile-card-indicator" style={{ backgroundColor: dotColor }}></div>
+        <div className="mobile-card-content">
+          <div className="mobile-card-header">
+            <span className="mobile-card-title">
+              <span style={{ color: index < 3 ? 'var(--yellow)' : 'inherit', marginRight: '6px' }}>{index < 3 ? '★' : ''} #{index + 1}</span> 
+              {stock.ticker}
+            </span>
+            <span className="mobile-card-price">R$ {stock.cotacaoAtual?.toFixed(2) || '0.00'}</span>
+          </div>
+          <div className="mobile-card-subtitle">{stock.empresa?.substring(0, 25)}</div>
+          
+          <div className="mobile-card-score-row">
+            <div className="mobile-card-score-value">
+              {score} <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 400 }}>{scoreField === 'fScore' ? 'pts' : 'score'}</span>
+            </div>
+            <div className="mobile-card-progress-track">
+              <div 
+                className="mobile-card-progress-fill" 
+                style={{ 
+                  width: `${percent}%`, 
+                  background: gradient 
+                }}
+              >
+                <div className="mobile-card-progress-dot" style={{ backgroundColor: dotColor }}></div>
+              </div>
+              <div className="mobile-card-progress-target"></div>
+            </div>
+          </div>
+          
+          <div className="mobile-card-stats">
+            <div className="mobile-card-stat">
+              <span className="mobile-card-stat-label">P/L</span>
+              <span className="mobile-card-stat-value">{stock.pl?.toFixed(2) || '-'}</span>
+            </div>
+            <div className="mobile-card-stat">
+              <span className="mobile-card-stat-label">Div. Yield</span>
+              <span className="mobile-card-stat-value">{stock.divYield?.toFixed(1) || '-'}%</span>
+            </div>
+            <div className="mobile-card-stat">
+              <span className="mobile-card-stat-label">ROE</span>
+              <span className="mobile-card-stat-value">{stock.roe?.toFixed(1) || '-'}%</span>
+            </div>
+          </div>
         </div>
       </div>
+    );
+  };
 
-      {filteredStocks.length > 0 && <Top10Chart stocks={filteredStocks} title={`Top 10 — Ranking ${PERFIS_SCORE[activeProfile]?.label || 'Valuation'}`} scoreField="scoreComposto" scoreSuffix="pts" />}
-      
-      <div className="table-container">
-        <table className="valuation-table">
-          <thead>
-            <tr>
-              <th>Posição</th>
-              <th>Ativo</th>
-              <th>Cotação</th>
-              <th><Tooltip text="Relação percentual entre os dividendos pagos nos últimos 12 meses e o preço atual da ação.">Div. Yield</Tooltip></th>
-              <th><Tooltip text="Preço / Lucro. Quantos anos levaria para reaver o capital investido considerando o lucro atual.">P/L</Tooltip></th>
-              <th><Tooltip text="Porcentagem de lucro líquido em relação à receita total da empresa.">M. Líquida</Tooltip></th>
-              <th><Tooltip text="Retorno sobre o Patrimônio Líquido. Mede o quão eficiente a empresa é em gerar lucro com os recursos dos acionistas.">ROE</Tooltip></th>
-              <th><Tooltip text="Dívida Bruta dividida pelo Patrimônio. Mede o risco de endividamento da empresa.">Alavancagem</Tooltip></th>
-              <th><Tooltip text="Preço Teto baseado no dividendo mínimo de 6% (Fórmula de Décio Bazin).">Valuation Bazin</Tooltip></th>
-              <th><Tooltip text="Preço Justo calculado a partir do VPA e LPA (Fórmula de Benjamin Graham).">Valuation Graham</Tooltip></th>
-              <th><Tooltip text="Pontuação estatística de 0 a 100 baseada nos 5 pilares com os pesos do Perfil selecionado.">Score Final</Tooltip></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStocks.map((stock, index) => (
-              <tr key={stock.ticker} onClick={() => setSelectedStock(stock)}>
-                <td style={{ color: index < 3 ? 'var(--yellow)' : 'inherit', fontWeight: index < 3 ? 600 : 'normal' }}>
-                  {index < 3 ? '★' : ''} {index + 1}
-                </td>
-                <td>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{stock.ticker}</span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{stock.empresa?.substring(0, 20)}</span>
-                  </div>
-                </td>
-                <td>R$ {stock.cotacaoAtual?.toFixed(2) || 'N/A'}</td>
-                <td><StatusIndicator value={stock.divYield?.toFixed(1)} thresholds={{good: 6, bad: 3}}/>%</td>
-                <td><StatusIndicator value={stock.pl?.toFixed(2)} thresholds={{good: 5, bad: 15}} inverse={true}/></td>
-                <td><StatusIndicator value={stock.margemLiquida?.toFixed(1)} thresholds={{good: 15, bad: 5}}/>%</td>
-                <td><StatusIndicator value={stock.roe?.toFixed(1)} thresholds={{good: 15, bad: 5}}/>%</td>
-                <td>{stock.divBrutaPatrim?.toFixed(2) || 'N/A'}</td>
-                
-                <td>
-                  R$ {stock.precoTetoBazin?.toFixed(2) || '0.00'}
-                </td>
-                <td>
-                  R$ {stock.precoJustoGraham?.toFixed(2) || '0.00'}
-                </td>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span className={`status-dot ${stock.scoreComposto > 70 ? 'status-green' : stock.scoreComposto > 40 ? 'status-yellow' : 'status-red'}`}></span>
-                    <span style={{ fontWeight: 600 }}>{stock.scoreComposto}</span>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
+  const renderGrahamBazin = () => {
+    const currentData = filteredStocks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-  const renderPiotroski = () => (
-    <>
-      {piotroskiStocks.length > 0 && <Top10Chart stocks={piotroskiStocks} title="Top 10 — Graham + Piotroski" scoreField="fScore" scoreSuffix="F-Score" />}
-      
-      <div className="table-container">
-        <table className="valuation-table">
-          <thead>
-            <tr>
-              <th>Posição</th>
-              <th>Ativo</th>
-              <th>Cotação</th>
-              <th><Tooltip text="Retorno sobre o Patrimônio Líquido.">ROE</Tooltip></th>
-              <th><Tooltip text="Liquidez Corrente. Capacidade da empresa de pagar suas dívidas de curto prazo.">Liq. Corr.</Tooltip></th>
-              <th><Tooltip text="Dívida Bruta dividida pelo Patrimônio.">Alavancagem</Tooltip></th>
-              <th><Tooltip text="Preço Justo calculado a partir do VPA e LPA (Fórmula de Benjamin Graham).">Valuation Graham</Tooltip></th>
-              <th><Tooltip text="Nota de 0 a 9 que mede a força financeira da empresa (Fórmula de Joseph Piotroski).">Piotroski F-Score</Tooltip></th>
-            </tr>
-          </thead>
-          <tbody>
-            {piotroskiStocks.map((stock, index) => (
-              <tr key={stock.ticker} onClick={() => setSelectedStock(stock)}>
-                <td style={{ color: index < 3 ? 'var(--yellow)' : 'inherit', fontWeight: index < 3 ? 600 : 'normal' }}>
-                  {index < 3 ? '★' : ''} {index + 1}
-                </td>
-                <td>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{stock.ticker}</span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{stock.empresa?.substring(0, 20)}</span>
-                  </div>
-                </td>
-                <td>R$ {stock.cotacaoAtual?.toFixed(2) || 'N/A'}</td>
-                <td><StatusIndicator value={stock.roe?.toFixed(1)} thresholds={{good: 15, bad: 5}}/>%</td>
-                <td><StatusIndicator value={stock.liqCorr?.toFixed(2)} thresholds={{good: 1.5, bad: 1}}/></td>
-                <td>{stock.divBrutaPatrim?.toFixed(2) || 'N/A'}</td>
-                
-                <td>
-                  R$ {stock.precoJustoGraham?.toFixed(2) || '0.00'}
-                </td>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span className={`status-dot ${stock.fScore >= 7 ? 'status-green' : stock.fScore >= 4 ? 'status-yellow' : 'status-red'}`}></span>
-                    <span style={{ fontWeight: 600 }}>{stock.fScore} / 9</span>
-                  </div>
-                </td>
+    return (
+      <>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Perfil:</span>
+            <select 
+              className="vercel-select"
+              value={activeProfile} 
+              onChange={(e) => setProfile(e.target.value)}
+            >
+              {Object.entries(PERFIS_SCORE).map(([key, perfil]) => (
+                <option key={key} value={key}>{perfil.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {currentPage === 1 && filteredStocks.length > 0 && <Top10Chart stocks={filteredStocks} title={`Top 10 — Ranking ${PERFIS_SCORE[activeProfile]?.label || 'Valuation'}`} scoreField="scoreComposto" scoreSuffix="pts" />}
+        
+        {/* Desktop Table */}
+        <div className="table-container desktop-only">
+          <table className="valuation-table">
+            <thead>
+              <tr>
+                <th>Posição</th>
+                <th>Ativo</th>
+                <th>Cotação</th>
+                <th><Tooltip text="Relação percentual entre os dividendos pagos nos últimos 12 meses e o preço atual da ação.">Div. Yield</Tooltip></th>
+                <th><Tooltip text="Preço / Lucro. Quantos anos levaria para reaver o capital investido considerando o lucro atual.">P/L</Tooltip></th>
+                <th><Tooltip text="Porcentagem de lucro líquido em relação à receita total da empresa.">M. Líquida</Tooltip></th>
+                <th><Tooltip text="Retorno sobre o Patrimônio Líquido. Mede o quão eficiente a empresa é em gerar lucro com os recursos dos acionistas.">ROE</Tooltip></th>
+                <th><Tooltip text="Dívida Bruta dividida pelo Patrimônio. Mede o risco de endividamento da empresa.">Alavancagem</Tooltip></th>
+                <th><Tooltip text="Preço Teto baseado no dividendo mínimo de 6% (Fórmula de Décio Bazin).">Valuation Bazin</Tooltip></th>
+                <th><Tooltip text="Preço Justo calculado a partir do VPA e LPA (Fórmula de Benjamin Graham).">Valuation Graham</Tooltip></th>
+                <th><Tooltip text="Pontuação estatística de 0 a 100 baseada nos 5 pilares com os pesos do Perfil selecionado.">Score Final</Tooltip></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
+            </thead>
+            <tbody>
+              {currentData.map((stock, idx) => {
+                const index = (currentPage - 1) * ITEMS_PER_PAGE + idx;
+                return (
+                  <tr key={stock.ticker} onClick={() => setSelectedStock(stock)}>
+                    <td style={{ color: index < 3 ? 'var(--yellow)' : 'inherit', fontWeight: index < 3 ? 600 : 'normal' }}>
+                      {index < 3 ? '★' : ''} {index + 1}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{stock.ticker}</span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{stock.empresa?.substring(0, 20)}</span>
+                      </div>
+                    </td>
+                    <td>R$ {stock.cotacaoAtual?.toFixed(2) || 'N/A'}</td>
+                    <td><StatusIndicator value={stock.divYield?.toFixed(1)} thresholds={{good: 6, bad: 3}}/>%</td>
+                    <td><StatusIndicator value={stock.pl?.toFixed(2)} thresholds={{good: 5, bad: 15}} inverse={true}/></td>
+                    <td><StatusIndicator value={stock.margemLiquida?.toFixed(1)} thresholds={{good: 15, bad: 5}}/>%</td>
+                    <td><StatusIndicator value={stock.roe?.toFixed(1)} thresholds={{good: 15, bad: 5}}/>%</td>
+                    <td>{stock.divBrutaPatrim?.toFixed(2) || 'N/A'}</td>
+                    
+                    <td>
+                      R$ {stock.precoTetoBazin?.toFixed(2) || '0.00'}
+                    </td>
+                    <td>
+                      R$ {stock.precoJustoGraham?.toFixed(2) || '0.00'}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className={`status-dot ${stock.scoreComposto > 70 ? 'status-green' : stock.scoreComposto > 40 ? 'status-yellow' : 'status-red'}`}></span>
+                        <span style={{ fontWeight: 600 }}>{stock.scoreComposto}</span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Card List */}
+        <div className="mobile-card-list mobile-only">
+          {currentData.map((stock, idx) => (
+            <MobileCard key={stock.ticker} stock={stock} index={(currentPage - 1) * ITEMS_PER_PAGE + idx} scoreField="scoreComposto" />
+          ))}
+        </div>
+
+        {renderPagination(filteredStocks.length)}
+      </>
+    );
+  };
+
+  const renderPiotroski = () => {
+    const currentData = piotroskiStocks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+    return (
+      <>
+        {currentPage === 1 && piotroskiStocks.length > 0 && <Top10Chart stocks={piotroskiStocks} title="Top 10 — Graham + Piotroski" scoreField="fScore" scoreSuffix="F-Score" />}
+        
+        {/* Desktop Table */}
+        <div className="table-container desktop-only">
+          <table className="valuation-table">
+            <thead>
+              <tr>
+                <th>Posição</th>
+                <th>Ativo</th>
+                <th>Cotação</th>
+                <th><Tooltip text="Retorno sobre o Patrimônio Líquido.">ROE</Tooltip></th>
+                <th><Tooltip text="Liquidez Corrente. Capacidade da empresa de pagar suas dívidas de curto prazo.">Liq. Corr.</Tooltip></th>
+                <th><Tooltip text="Dívida Bruta dividida pelo Patrimônio.">Alavancagem</Tooltip></th>
+                <th><Tooltip text="Preço Justo calculado a partir do VPA e LPA (Fórmula de Benjamin Graham).">Valuation Graham</Tooltip></th>
+                <th><Tooltip text="Nota de 0 a 9 que mede a força financeira da empresa (Fórmula de Joseph Piotroski).">Piotroski F-Score</Tooltip></th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentData.map((stock, idx) => {
+                const index = (currentPage - 1) * ITEMS_PER_PAGE + idx;
+                return (
+                  <tr key={stock.ticker} onClick={() => setSelectedStock(stock)}>
+                    <td style={{ color: index < 3 ? 'var(--yellow)' : 'inherit', fontWeight: index < 3 ? 600 : 'normal' }}>
+                      {index < 3 ? '★' : ''} {index + 1}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{stock.ticker}</span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{stock.empresa?.substring(0, 20)}</span>
+                      </div>
+                    </td>
+                    <td>R$ {stock.cotacaoAtual?.toFixed(2) || 'N/A'}</td>
+                    <td><StatusIndicator value={stock.roe?.toFixed(1)} thresholds={{good: 15, bad: 5}}/>%</td>
+                    <td><StatusIndicator value={stock.liqCorr?.toFixed(2)} thresholds={{good: 1.5, bad: 1}}/></td>
+                    <td>{stock.divBrutaPatrim?.toFixed(2) || 'N/A'}</td>
+                    
+                    <td>
+                      R$ {stock.precoJustoGraham?.toFixed(2) || '0.00'}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className={`status-dot ${stock.fScore >= 7 ? 'status-green' : stock.fScore >= 4 ? 'status-yellow' : 'status-red'}`}></span>
+                        <span style={{ fontWeight: 600 }}>{stock.fScore} / 9</span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Card List */}
+        <div className="mobile-card-list mobile-only">
+          {currentData.map((stock, idx) => (
+            <MobileCard key={stock.ticker} stock={stock} index={(currentPage - 1) * ITEMS_PER_PAGE + idx} scoreField="fScore" />
+          ))}
+        </div>
+
+        {renderPagination(piotroskiStocks.length)}
+      </>
+    );
+  };
 
   const renderMetodologia = () => (
     <div style={{ maxWidth: '800px', margin: '0 auto', color: 'var(--text-primary)', lineHeight: 1.6 }}>
@@ -264,8 +396,8 @@ export default function Dashboard() {
 
   return (
     <div className="app-wrapper">
-      {/* Sidebar */}
-      <aside className="sidebar">
+      {/* Sidebar Desktop Only */}
+      <aside className="sidebar desktop-only">
         <div className="sidebar-logo">
           <IconLogo />
           <span>Aegis Platform</span>
@@ -293,16 +425,11 @@ export default function Dashboard() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
             <span>Metodologia</span>
           </div>
-          <div style={{ margin: '16px 0 8px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-muted)', paddingLeft: '12px' }}>Sistema</div>
-          <div className="sidebar-item" onClick={() => setIsSettingsOpen(true)}>
-            <IconSettings />
-            <span>Configurações</span>
-          </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="main-content">
+      <main className="main-content pb-mobile">
         <header className="header">
           {activeTab === 'graham_bazin' ? 'Aegis / Speed Insights / Ranking Compostos' : activeTab === 'piotroski' ? 'Aegis / Speed Insights / Graham + Piotroski' : 'Aegis / Analytics / Metodologia'}
         </header>
@@ -323,8 +450,33 @@ export default function Dashboard() {
           {activeTab === 'graham_bazin' && renderGrahamBazin()}
           {activeTab === 'piotroski' && renderPiotroski()}
           {activeTab === 'metodologia' && renderMetodologia()}
+          
+          <div className="sync-section">
+            <button className="btn btn-primary" onClick={syncAll} disabled={isSyncing} style={{ width: '100%', maxWidth: '400px', margin: '40px auto 0', display: 'block', padding: '16px' }}>
+              {isSyncing ? 'Sincronizando...' : '🔄 Sincronizar Dados'}
+            </button>
+            <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>
+              Atualiza os dados de cotação com a B3.
+            </p>
+          </div>
         </div>
       </main>
+
+      {/* Bottom Nav Mobile */}
+      <nav className="bottom-nav mobile-only">
+        <div className={`bottom-nav-item ${activeTab === 'graham_bazin' ? 'active' : ''}`} onClick={() => setActiveTab('graham_bazin')}>
+          <IconSpeed />
+          <span>Ranking</span>
+        </div>
+        <div className={`bottom-nav-item ${activeTab === 'piotroski' ? 'active' : ''}`} onClick={() => setActiveTab('piotroski')}>
+          <IconValuation />
+          <span>Piotroski</span>
+        </div>
+        <div className={`bottom-nav-item ${activeTab === 'metodologia' ? 'active' : ''}`} onClick={() => setActiveTab('metodologia')}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+          <span>Metodologia</span>
+        </div>
+      </nav>
 
       {/* Modal Detalhes */}
       {selectedStock && (
@@ -332,11 +484,6 @@ export default function Dashboard() {
           stock={selectedStock} 
           onClose={() => setSelectedStock(null)} 
         />
-      )}
-
-      {/* Modal Settings */}
-      {isSettingsOpen && (
-        <SettingsModal onClose={() => setIsSettingsOpen(false)} />
       )}
     </div>
   );
