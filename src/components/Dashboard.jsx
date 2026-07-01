@@ -108,7 +108,7 @@ export default function Dashboard() {
         <div className="mobile-card-content">
           <div className="mobile-card-header">
             <span className="mobile-card-title" style={{ display: 'flex', alignItems: 'center' }}>
-              <span style={{ color: index < 3 ? 'var(--yellow)' : 'inherit', marginRight: '6px' }}>{index < 3 ? '★' : ''} #{index + 1}</span> 
+              <span style={{ color: stock.posicao <= 3 ? 'var(--yellow)' : 'inherit', marginRight: '6px' }}>{stock.posicao <= 3 ? '★' : ''} #{stock.posicao}</span> 
               
               {stock.logoUrl ? (
                 <img src={stock.logoUrl} alt={stock.ticker} style={{width: 20, height: 20, borderRadius: '50%', marginRight: '8px', objectFit: 'contain', background: 'white'}} />
@@ -212,8 +212,8 @@ export default function Dashboard() {
                 const index = (currentPage - 1) * ITEMS_PER_PAGE + idx;
                 return (
                   <tr key={stock.ticker} onClick={() => setSelectedStock(stock)}>
-                    <td style={{ color: index < 3 ? 'var(--yellow)' : 'inherit', fontWeight: index < 3 ? 600 : 'normal' }}>
-                      {index < 3 ? '★' : ''} {index + 1}
+                    <td style={{ color: stock.posicao <= 3 ? 'var(--yellow)' : 'inherit', fontWeight: stock.posicao <= 3 ? 600 : 'normal' }}>
+                      {stock.posicao <= 3 ? '★' : ''} {stock.posicao}
                     </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -256,8 +256,8 @@ export default function Dashboard() {
 
         {/* Mobile Card List */}
         <div className="mobile-card-list mobile-only">
-          {currentData.map((stock, idx) => (
-            <MobileCard key={stock.ticker} stock={stock} index={(currentPage - 1) * ITEMS_PER_PAGE + idx} scoreField="scoreComposto" />
+          {currentData.map((stock) => (
+            <MobileCard key={stock.ticker} stock={stock} scoreField="scoreComposto" />
           ))}
         </div>
 
