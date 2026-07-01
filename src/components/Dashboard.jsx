@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useStocks } from '../context/StockContext';
 import SyncProgressBar from './SyncProgressBar';
 import StockDetail from './StockDetail';
+import SettingsModal from './SettingsModal';
 import { rankPiotroskiGraham, PERFIS_SCORE } from '../utils/valuation';
 
 // --- SVGs for Icons (Vercel Style) ---
@@ -73,6 +74,7 @@ export default function Dashboard() {
   const { filteredStocks, stocks, isLoading, isSyncing, error, activeProfile, setProfile } = useStocks();
   const [activeTab, setActiveTab] = useState('graham_bazin');
   const [selectedStock, setSelectedStock] = useState(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   if (isLoading || (isSyncing && stocks.length === 0)) return <LoadingState />;
 
@@ -292,7 +294,7 @@ export default function Dashboard() {
             <span>Metodologia</span>
           </div>
           <div style={{ margin: '16px 0 8px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-muted)', paddingLeft: '12px' }}>Sistema</div>
-          <div className="sidebar-item">
+          <div className="sidebar-item" onClick={() => setIsSettingsOpen(true)}>
             <IconSettings />
             <span>Configurações</span>
           </div>
@@ -330,6 +332,11 @@ export default function Dashboard() {
           stock={selectedStock} 
           onClose={() => setSelectedStock(null)} 
         />
+      )}
+
+      {/* Modal Settings */}
+      {isSettingsOpen && (
+        <SettingsModal onClose={() => setIsSettingsOpen(false)} />
       )}
     </div>
   );

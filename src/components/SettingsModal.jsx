@@ -95,13 +95,21 @@ export default function SettingsModal({ onClose }) {
             Todos os dados são armazenados localmente no seu navegador (IndexedDB).
             Nenhum dado é enviado para servidores externos além da API Brapi.
           </p>
-          <button
-            className="btn btn-danger"
-            onClick={handleReset}
-            disabled={resetting}
-          >
-            {resetting ? 'Limpando...' : '🗑️ Limpar Todos os Dados'}
-          </button>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+            <button
+              className="btn btn-primary"
+              onClick={() => { syncAll(); onClose(); }}
+            >
+              🔄 Sincronizar Agora
+            </button>
+            <button
+              className="btn btn-danger"
+              onClick={handleReset}
+              disabled={resetting}
+            >
+              {resetting ? 'Limpando...' : '🗑️ Limpar Todos os Dados'}
+            </button>
+          </div>
         </div>
 
         {/* Como funciona */}
