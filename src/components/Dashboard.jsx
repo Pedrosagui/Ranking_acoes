@@ -70,7 +70,7 @@ function Top10Chart({ stocks, title, scoreField, scoreSuffix = 'pts' }) {
 const ITEMS_PER_PAGE = 30;
 
 export default function Dashboard() {
-  const { filteredStocks, stocks, isLoading, error, activeProfile, setProfile } = useStocks();
+  const { filteredStocks, stocks, isLoading, error, activeProfile, setProfile, isSyncing } = useStocks();
   const [activeTab, setActiveTab] = useState('graham_bazin');
   const [selectedStock, setSelectedStock] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
