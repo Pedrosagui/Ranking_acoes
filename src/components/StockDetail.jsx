@@ -73,7 +73,7 @@ export default function StockDetail({ stock, onClose }) {
             {stock.logoUrl ? (
               <img src={stock.logoUrl} alt={stock.ticker} style={{width: 40, height: 40, borderRadius: '50%', objectFit: 'contain', background: 'white'}} />
             ) : (
-              <div style={{width: 40, height: 40, borderRadius: '50%', background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 'bold', color: 'var(--text-secondary)'}}>{stock.ticker.charAt(0)}</div>
+              <div style={{width: 40, height: 40, borderRadius: '50%', background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 'bold', color: 'var(--text-secondary)'}}>{stock.ticker ? stock.ticker.charAt(0) : '?'}</div>
             )}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <h2 className="modal-title" style={{ margin: 0, fontSize: '20px' }}>{stock.ticker}</h2>

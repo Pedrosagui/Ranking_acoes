@@ -147,7 +147,7 @@ export default function Dashboard() {
               {stock.logoUrl ? (
                 <img src={stock.logoUrl} alt={stock.ticker} style={{width: 20, height: 20, borderRadius: '50%', marginRight: '8px', objectFit: 'contain', background: 'white'}} />
               ) : (
-                <div style={{width: 20, height: 20, borderRadius: '50%', background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '8px', fontSize: '10px', fontWeight: 'bold', color: 'var(--text-secondary)'}}>{stock.ticker.charAt(0)}</div>
+                <div style={{width: 20, height: 20, borderRadius: '50%', background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '8px', fontSize: '10px', fontWeight: 'bold', color: 'var(--text-secondary)'}}>{stock.ticker ? stock.ticker.charAt(0) : '?'}</div>
               )}
 
               {stock.ticker}
@@ -256,7 +256,7 @@ export default function Dashboard() {
                         {stock.logoUrl ? (
                           <img src={stock.logoUrl} alt={stock.ticker} style={{width: 28, height: 28, borderRadius: '50%', objectFit: 'contain', background: 'white'}} />
                         ) : (
-                          <div style={{width: 28, height: 28, borderRadius: '50%', background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)'}}>{stock.ticker.charAt(0)}</div>
+                          <div style={{width: 28, height: 28, borderRadius: '50%', background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)'}}>{stock.ticker ? stock.ticker.charAt(0) : '?'}</div>
                         )}
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{stock.ticker}</span>
@@ -350,7 +350,7 @@ export default function Dashboard() {
                         {stock.logoUrl ? (
                           <img src={stock.logoUrl} alt={stock.ticker} style={{width: 28, height: 28, borderRadius: '50%', objectFit: 'contain', background: 'white'}} />
                         ) : (
-                          <div style={{width: 28, height: 28, borderRadius: '50%', background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)'}}>{stock.ticker.charAt(0)}</div>
+                          <div style={{width: 28, height: 28, borderRadius: '50%', background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)'}}>{stock.ticker ? stock.ticker.charAt(0) : '?'}</div>
                         )}
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{stock.ticker}</span>
