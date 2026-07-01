@@ -122,6 +122,45 @@ export function calcScore(stock) {
 }
 
 /**
+ * Piotroski F-Score Simplificado (0 a 9)
+ * Como não temos histórico anual detalhado no Fundamentus (apenas o snapshot atual),
+ * usamos proxies estáticos disponíveis:
+ * 1. Lucratividade: ROE > 0 (1)
+ * 2. Lucratividade: Margem Líquida > 0 (1)
+ * 3. Lucratividade: LPA > 0 (1)
+ * 4. Alavancagem: Dívida Bruta/Patrimônio < 1 (1)
+ * 5. Alavancagem: Liquidez Corrente > 1 (1)
+ * 6. Eficiência: Margem EBIT > 0 (1)
+ * 7. Crescimento: Receita 5a > 0 (1)
+ * 8. Dividendos: Pagou dividendo consistente? (1)
+ * 9. Valuation: P/L > 0 e < 15 (1)
+ */
+export function calcSimplifiedFScore(stock) {
+  let fScore = 0;
+  if ((stock.roe || 0) > 0) fScore += 1;
+  if ((stock.margemLiquida || 0) > 0) fScore += 1;
+  if ((stock.lpa || 0) > 0) fScore += 1;
+  if ((stock.divBrutaPatrim || 999) < 1) fScore += 1; // Menos dívida é melhor
+  if ((stock.liqCorr || 0) > 1) fScore += 1;
+  if ((stock.margemEbit || 0) > 0) fScore += 1;
+  if ((stock.crescRec5a || 0) > 0) fScore += 1;
+  if (isConsistente(stock.dividendosHistoricos)) fScore += 1;
+  if ((stock.pl || 0) > 0 && (stock.pl || 0) < 15) fScore += 1;
+  
+  return fScore;
+}
+
+/**
+ * PEG Ratio = P/L / Crescimento
+ * Usamos crescimento da receita em 5 anos como proxy para crescimento de lucros
+ */
+export function calcPegRatio(pl, crescRec5a) {
+  if (!pl || !crescRec5a || crescRec5a <= 0 || pl <= 0) return null;
+  // Multiplica por 100 pois crescRec5a costuma vir em percentual (ex: 15 para 15%)
+  return pl / crescRec5a;
+}
+
+/**
  * Enriquece um objeto de ação com todos os valores calculados
  * @param {Object} rawStock - Dados brutos do IndexedDB/API
  * @returns {Object} Ação com todos os campos de valuation calculados
@@ -134,6 +173,9 @@ export function enrichStock(rawStock) {
   const margemGraham = calcMargemGraham(precoJustoGraham, rawStock.cotacaoAtual);
   const score = calcScore(rawStock);
   const consistente = isConsistente(rawStock.dividendosHistoricos);
+  
+  const fScore = calcSimplifiedFScore(rawStock);
+  const pegRatio = calcPegRatio(rawStock.pl, rawStock.crescRec5a);
 
   return {
     ...rawStock,
@@ -144,6 +186,8 @@ export function enrichStock(rawStock) {
     margemGraham,
     score,
     consistente,
+    fScore,
+    pegRatio
   };
 }
 
@@ -156,6 +200,36 @@ export function enrichStock(rawStock) {
 export function rankStocks(stocks) {
   return [...stocks]
     .sort((a, b) => b.score - a.score)
+    .map((stock, index) => ({ ...stock, posicao: index + 1 }));
+}
+
+/**
+ * Ordena pelo Piotroski F-Score primeiro, e desempata pela Margem de Graham
+ */
+export function rankPiotroskiGraham(stocks) {
+  return [...stocks]
+    .filter(s => s.margemGraham > 0) // Tem que ter desconto de Graham
+    .sort((a, b) => {
+      if (b.fScore !== a.fScore) return b.fScore - a.fScore; // Maior F-Score primeiro
+      return b.margemGraham - a.margemGraham; // Desempate por maior margem
+    })
+    .map((stock, index) => ({ ...stock, posicao: index + 1 }));
+}
+
+/**
+ * Filtra setor Tech e ordena pelo menor PEG Ratio (que seja > 0)
+ */
+export function rankTechPegRatio(stocks) {
+  const techKeywords = ['computador', 'programa', 'equipamento', 'tecnologia', 'software', 'dados'];
+  
+  return [...stocks]
+    .filter(s => {
+      if (!s.setor) return false;
+      const setorLower = s.setor.toLowerCase();
+      return techKeywords.some(k => setorLower.includes(k));
+    })
+    .filter(s => s.pegRatio !== null && s.pegRatio > 0 && s.pegRatio < 5) // PEG razoável
+    .sort((a, b) => a.pegRatio - b.pegRatio) // Menor PEG é melhor
     .map((stock, index) => ({ ...stock, posicao: index + 1 }));
 }
 

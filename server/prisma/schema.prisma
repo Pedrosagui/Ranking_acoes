@@ -45,6 +45,7 @@ model Stock {
   pegRatio          Float?
   fScore            Int?
   financialData     Json?     // Armazena DRE/Balanço puro (útil para calcular o F-Score detalhado depois)
+  dividendHistory   Json?     // Armazena o histórico de dividendos (ex: [{ano: 2024, totalPago: 1.5}])
   
   updatedAt         DateTime  @updatedAt
   
