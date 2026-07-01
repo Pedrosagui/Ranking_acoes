@@ -261,7 +261,7 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {renderPagination(filteredStocks.length)}
+        {renderPagination(searchedStocks.length)}
       </>
     );
   };
