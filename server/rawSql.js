@@ -9,8 +9,8 @@ const pool = new Pool({
 
 async function run() {
   try {
-    console.log('Adding dividendHistory column...');
-    await pool.query('ALTER TABLE "Stock" ADD COLUMN IF NOT EXISTS "dividendHistory" JSONB;');
+    console.log('Adding historicalFinancials column...');
+    await pool.query('ALTER TABLE "Stock" ADD COLUMN IF NOT EXISTS "historicalFinancials" JSONB;');
     console.log('Column added successfully!');
   } catch (err) {
     console.error('Error adding column:', err);

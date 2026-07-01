@@ -45,7 +45,6 @@ export default function Dashboard() {
   if (isLoading || (isSyncing && stocks.length === 0)) return <LoadingState />;
 
   const piotroskiStocks = rankPiotroskiGraham(stocks);
-  const techPegStocks = rankTechPegRatio(stocks);
 
   const renderGrahamBazin = () => (
     <>
@@ -119,38 +118,6 @@ export default function Dashboard() {
     </>
   );
 
-  const renderPegRatio = () => (
-    <>
-      {techPegStocks.length > 0 && <Top10Chart stocks={techPegStocks} title="Top 10 — PEG Ratio Tech" scoreField="pegRatio" scoreSuffix="PEG" />}
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Ticker</th>
-              <th>Setor</th>
-              <th>P/L</th>
-              <th>Cresc. Rec 5a</th>
-              <th>PEG Ratio</th>
-            </tr>
-          </thead>
-          <tbody>
-            {techPegStocks.map((stock, index) => (
-              <tr key={stock.ticker} onClick={() => setSelectedStock(stock)}>
-                <td>#{index + 1}</td>
-                <td className="ticker-name">{stock.ticker}</td>
-                <td>{stock.setor}</td>
-                <td>{stock.pl?.toFixed(2)}</td>
-                <td>{stock.crescRec5a?.toFixed(1)}%</td>
-                <td style={{ fontWeight: 'bold' }}>{stock.pegRatio?.toFixed(2)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
-
   return (
     <div className="app-container">
       <header className="header">
@@ -178,17 +145,10 @@ export default function Dashboard() {
         >
           Graham + Piotroski
         </button>
-        <button 
-          className={`btn ${activeTab === 'peg_tech' ? 'btn-primary' : 'btn-outline'}`}
-          onClick={() => setActiveTab('peg_tech')}
-        >
-          PEG Ratio (Tech)
-        </button>
       </div>
 
       {activeTab === 'graham_bazin' && renderGrahamBazin()}
       {activeTab === 'piotroski' && renderPiotroski()}
-      {activeTab === 'peg_tech' && renderPegRatio()}
 
       {selectedStock && (
         <StockDetail 
