@@ -4,7 +4,7 @@
 import { saveStocks, addLog } from '../db/database';
 import { enrichStock } from '../utils/valuation';
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 /**
  * Sincroniza todos os ativos chamando nosso backend
