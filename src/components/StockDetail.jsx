@@ -65,13 +65,16 @@ const CustomTooltip = ({ active, payload, label }) => {
     return (
       <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-light)', borderRadius: '8px', padding: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
         <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', color: 'var(--text-primary)' }}>{dateStr}</p>
-        {payload.map(p => (
-          <div key={p.dataKey} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: p.color }}></div>
-            <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{p.name}:</span>
-            <span style={{ fontWeight: 600, color: p.color }}>R$ {p.value.toFixed(2)}</span>
-          </div>
-        ))}
+        {payload.map(p => {
+          const itemColor = p.color && p.color.startsWith('url') ? '#8A2BE2' : p.color;
+          return (
+            <div key={p.dataKey} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: itemColor }}></div>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{p.name}:</span>
+              <span style={{ fontWeight: 600, color: itemColor }}>R$ {p.value.toFixed(2)}</span>
+            </div>
+          );
+        })}
       </div>
     );
   }
