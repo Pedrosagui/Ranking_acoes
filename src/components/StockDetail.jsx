@@ -112,7 +112,9 @@ export default function StockDetail({ stock, onClose }) {
           </div>
           <div className="metric-card" style={{ background: 'var(--bg-app)', border: 'none' }}>
             <div className="metric-title">Score Final</div>
-            <div className="metric-value" style={{ color: '#8A2BE2' }}>{stock.scoreComposto || stock.score} <span style={{fontSize:'12px', fontWeight:400}}>pts</span></div>
+            <div className="metric-value" style={{ color: (stock.scoreComposto ?? stock.score ?? 0) === 0 ? 'var(--red)' : '#8A2BE2' }}>
+              {stock.scoreComposto ?? stock.score ?? 0} <span style={{fontSize:'12px', fontWeight:400}}>pts</span>
+            </div>
           </div>
           <div className="metric-card" style={{ background: 'var(--bg-app)', border: 'none' }}>
             <div className="metric-title">Upside Graham</div>
