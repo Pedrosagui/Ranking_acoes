@@ -42,6 +42,7 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
         ticker: s.ticker,
         empresa: s.empresa,
         setor: s.setor,
+        logoUrl: s.logoUrl,
         cotacaoAtual: precoAtual,
         lpa: s.lpa || 0,
         vpa: s.vpa || 0,

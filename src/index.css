@@ -169,16 +169,21 @@ body {
 
 /* Vercel Style Metrics */
 .metric-card {
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  padding: 20px;
-  background: var(--bg-surface);
+  border: none;
+  border-radius: 16px;
+  padding: 16px;
+  background: var(--bg-app);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .metric-title {
-  font-size: 13px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .metric-value {
