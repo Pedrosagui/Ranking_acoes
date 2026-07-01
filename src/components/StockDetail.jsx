@@ -2,12 +2,13 @@ import React, { useMemo, useState } from 'react';
 import { useHistory } from '../hooks/useHistory';
 import { ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
-function calcInvestmentSimulation(stockHistory, ibovHistory) {
+function calcInvestmentSimulation(stockHistory, ibovHistory, divYield = 0, reinvest = true) {
   if (!stockHistory || stockHistory.length < 2) return { data: [], finalStock: 0, finalIbov: 0, finalCdi: 0 };
   
   // Pegamos os ultimos 25 pontos (24 meses de retorno)
   const recentStock = stockHistory.slice(-25);
   const cdiMonthlyReturn = 0.0085; // ~0.85%
+  const monthlyYield = reinvest ? (divYield / 100) / 12 : 0;
   
   const simulationData = [];
   let currentStock = 100;
@@ -27,7 +28,8 @@ function calcInvestmentSimulation(stockHistory, ibovHistory) {
     const s1 = recentStock[i-1];
     const s2 = recentStock[i];
     const stockReturn = (s2.price - s1.price) / s1.price;
-    currentStock = currentStock * (1 + stockReturn);
+    // Adiciona o dividend yield mensal caso a opção reinvestir esteja marcada
+    currentStock = currentStock * (1 + stockReturn + monthlyYield);
     
     // IBOV
     const i2 = ibovHistory.find(b => b.date.substring(0, 7) === s2.date.substring(0, 7));
@@ -84,8 +86,9 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function StockDetail({ stock, onClose }) {
   const { history } = useHistory(stock.ticker);
   const { history: ibovHistory } = useHistory('^BVSP');
+  const [reinvest, setReinvest] = useState(true);
   
-  const simulation = useMemo(() => calcInvestmentSimulation(history, ibovHistory), [history, ibovHistory]);
+  const simulation = useMemo(() => calcInvestmentSimulation(history, ibovHistory, stock.divYield || 0, reinvest), [history, ibovHistory, stock.divYield, reinvest]);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -132,6 +135,10 @@ export default function StockDetail({ stock, onClose }) {
                 <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)' }}>
                   Se você tivesse investido <strong>R$ 100,00</strong> há 2 anos, hoje você teria:
                 </p>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer', userSelect: 'none', color: 'var(--text-primary)', marginTop: '12px' }}>
+                  <input type="checkbox" checked={reinvest} onChange={e => setReinvest(e.target.checked)} style={{ cursor: 'pointer', width: '16px', height: '16px', accentColor: '#8A2BE2' }} />
+                  Reinvestir Dividendos
+                </label>
               </div>
               
               <div style={{ display: 'flex', gap: '16px' }}>

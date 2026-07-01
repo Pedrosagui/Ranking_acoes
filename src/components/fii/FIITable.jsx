@@ -26,6 +26,8 @@ export default function FIITable() {
               <th>FII</th>
               <th>Segmento</th>
               <th>Cotação / P/VP</th>
+              <th>Retorno Diário</th>
+              <th>Retorno (12M)</th>
               <th>Div. Yield (12M)</th>
               <th>Liquidez</th>
               <th>Score (100)</th>
@@ -55,11 +57,32 @@ export default function FIITable() {
                     <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>P/VP: {fii.pvp?.toFixed(2) || '---'}</span>
                   </div>
                 </td>
+                <td className={(fii.retornoDiario || 0) >= 0 ? 'text-green' : 'text-red'}>
+                  {(fii.retornoDiario || 0) >= 0 ? '+' : ''}{(fii.retornoDiario || 0).toFixed(2)}%
+                </td>
+                <td className={(fii.retorno12m || 0) >= 0 ? 'text-green' : 'text-red'}>
+                  {(fii.retorno12m || 0) >= 0 ? '+' : ''}{(fii.retorno12m || 0).toFixed(1)}%
+                </td>
                 <td className="text-green">{(fii.divYield || 0).toFixed(1)}%</td>
                 <td>{Math.round(fii.volumeDiario / 1000)}k</td>
                 <td>
-                  <div className="score-badge">
-                    <span className="score-value">{fii.scoreComposto}</span>
+                  <div className="score-badge" style={{
+                    background: `conic-gradient(var(--yellow) ${fii.scoreComposto * 3.6}deg, var(--bg-app) 0deg)`,
+                    border: 'none',
+                    padding: '4px'
+                  }}>
+                    <div style={{ 
+                      background: 'var(--bg-surface)', 
+                      width: '100%', 
+                      height: '100%', 
+                      borderRadius: '50%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
+                    }}>
+                      <span className="score-value">{fii.scoreComposto}</span>
+                    </div>
                   </div>
                 </td>
               </tr>

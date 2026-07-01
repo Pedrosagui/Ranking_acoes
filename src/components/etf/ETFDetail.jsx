@@ -7,6 +7,11 @@ function calcInvestmentSimulation(stockHistory, ibovHistory) {
   
   // Pegamos os ultimos 25 pontos (24 meses de retorno)
   const recentStock = stockHistory.slice(-25);
+  let recentIbov = [];
+  if (ibovHistory && ibovHistory.length >= recentStock.length) {
+    recentIbov = ibovHistory.slice(-recentStock.length);
+  }
+
   const cdiMonthlyReturn = 0.0085; // ~0.85%
   
   const simulationData = [];
@@ -24,28 +29,22 @@ function calcInvestmentSimulation(stockHistory, ibovHistory) {
   });
 
   for (let i = 1; i < recentStock.length; i++) {
-    const s1 = recentStock[i-1];
-    const s2 = recentStock[i];
-    const stockReturn = (s2.price - s1.price) / s1.price;
-    currentStock = currentStock * (1 + stockReturn);
+    const returnStock = (recentStock[i].price / recentStock[i - 1].price) - 1;
+    currentStock = currentStock * (1 + returnStock);
     
-    // IBOV
-    const i2 = ibovHistory.find(b => b.date.substring(0, 7) === s2.date.substring(0, 7));
-    const i1 = ibovHistory.find(b => b.date.substring(0, 7) === s1.date.substring(0, 7));
-    
-    if (i2 && i1) {
-       const ibovReturn = (i2.price - i1.price) / i1.price;
-       currentIbov = currentIbov * (1 + ibovReturn);
+    if (recentIbov.length > 0) {
+      const returnIbov = (recentIbov[i].price / recentIbov[i - 1].price) - 1;
+      currentIbov = currentIbov * (1 + returnIbov);
     }
     
     currentCdi = currentCdi * (1 + cdiMonthlyReturn);
     
     simulationData.push({
-      date: s2.date,
+      date: recentStock[i].date,
       stockValue: currentStock,
       ibovValue: currentIbov,
       cdiValue: currentCdi,
-      originalStockPrice: s2.price
+      originalStockPrice: recentStock[i].price
     });
   }
 

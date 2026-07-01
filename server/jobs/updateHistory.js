@@ -58,16 +58,29 @@ export async function updateHistory(prisma) {
               });
               historicoInserido++;
               
-              // Se for ETF, calcular rentabilidade12m
-              if (model === 'etf' && historyData.length >= 12) {
+              // Calcular retorno12m para todas as classes de ativos
+              if (historyData.length >= 12 && (model === 'etf' || model === 'stock' || model === 'fii')) {
                 const currentPrice = historyData[historyData.length - 1].price;
                 const price12m = historyData[Math.max(0, historyData.length - 13)].price;
                 if (price12m > 0) {
-                  const rentabilidade12m = ((currentPrice / price12m) - 1) * 100;
-                  await prisma.etf.update({
-                    where: { ticker },
-                    data: { rentabilidade12m }
-                  });
+                  const retorno12m = ((currentPrice / price12m) - 1) * 100;
+                  
+                  if (model === 'etf') {
+                    await prisma.etf.update({
+                      where: { ticker },
+                      data: { retorno12m }
+                    });
+                  } else if (model === 'stock') {
+                    await prisma.stock.update({
+                      where: { ticker },
+                      data: { retorno12m }
+                    });
+                  } else if (model === 'fii') {
+                    await prisma.fii.update({
+                      where: { ticker },
+                      data: { retorno12m }
+                    });
+                  }
                 }
               }
             }

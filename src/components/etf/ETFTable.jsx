@@ -59,8 +59,23 @@ export default function ETFTable() {
                 </td>
                 <td style={{ color: 'var(--text-muted)' }}>{etf.taxaAdm?.toFixed(2)}%</td>
                 <td>
-                  <div className="score-badge">
-                    <span className="score-value">{etf.scoreComposto}</span>
+                  <div className="score-badge" style={{
+                    background: `conic-gradient(var(--yellow) ${etf.scoreComposto * 3.6}deg, var(--bg-app) 0deg)`,
+                    border: 'none',
+                    padding: '4px'
+                  }}>
+                    <div style={{ 
+                      background: 'var(--bg-surface)', 
+                      width: '100%', 
+                      height: '100%', 
+                      borderRadius: '50%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
+                    }}>
+                      <span className="score-value">{etf.scoreComposto}</span>
+                    </div>
                   </div>
                 </td>
               </tr>
