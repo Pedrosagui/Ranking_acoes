@@ -89,8 +89,8 @@ async function run() {
     const roic = parsePtBrNumber(tds[16]);
     const roe = parsePtBrNumber(tds[17]); // 17 is ROE
     const liquidez = parsePtBrNumber(tds[18]); // 18 is Liquidez
-    const divBrutaPatrim = parsePtBrNumber(tds[19]); // Fundamentus: 19 = Div.Brut/ Patrim.
-    const crescRec5a = parsePtBrNumber(tds[20]); // 20 = Cresc. Rec.5a
+    const divBrutaPatrim = parsePtBrNumber(tds[20]); // 20 = Dív.Líq/Patrim
+    const crescRec5a = parsePtBrNumber(tds[21]); // 21 = Cresc. Rec.5a
     
     // Filter out very illiquid stocks (< R$ 100.000/dia)
     if (liquidez < 100000) continue;

@@ -73,7 +73,7 @@ export default function StockDetail({ stock, onClose }) {
           <button className="close-btn" onClick={onClose}>&times;</button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+        <div className="stock-detail-top" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', marginBottom: '24px' }}>
           <div className="metric-card">
             <div className="metric-title">Cotação Atual</div>
             <div className="metric-value">R$ {stock.cotacaoAtual?.toFixed(2)}</div>
@@ -119,7 +119,7 @@ export default function StockDetail({ stock, onClose }) {
         )}
 
         <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px' }}>Indicadores Fundamentalistas</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px', marginBottom: '32px' }}>
+        <div className="stock-detail-indicators" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px', marginBottom: '32px' }}>
           <div className="metric-card" style={{ padding: '12px' }}>
             <div className="metric-title" style={{ fontSize: '11px' }}>Div. Yield</div>
             <div style={{ fontSize: '16px', fontWeight: 600 }}>{stock.divYield?.toFixed(1) || '0.0'}%</div>

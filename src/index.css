@@ -481,16 +481,30 @@ select.vercel-select:focus {
   }
 
   .modal-overlay {
-    padding: 12px;
+    padding: 0;
+    align-items: flex-end;
     z-index: 1000;
   }
 
   .modal-content {
-    padding: 20px;
+    padding: 24px 16px;
+    width: 100%;
+    max-height: 90vh;
+    border-radius: 24px 24px 0 0;
+    margin: 0;
+  }
+  
+  .stock-detail-top {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .stock-detail-indicators {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
   
   .pilares-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
   }
 
   /* Bottom Navigation Bar */
