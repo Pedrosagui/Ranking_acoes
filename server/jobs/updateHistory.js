@@ -1,5 +1,9 @@
+import yahooFinancePkg from 'yahoo-finance2';
+const YF = yahooFinancePkg.default || yahooFinancePkg;
+const yahooFinance = new YF({ suppressNotices: ['yahooSurvey', 'ripHistorical'] });
+
 export async function updateHistory(prisma) {
-  console.log('🔄 Iniciando atualização de histórico de 5 anos (Yahoo Finance)...');
+  console.log('📈 Iniciando atualização de histórico de 5 anos (Yahoo Finance)...');
   
   try {
     const stocks = await prisma.stock.findMany({ select: { ticker: true } });
@@ -26,28 +30,30 @@ export async function updateHistory(prisma) {
         let symbol = `${ticker}.SA`;
         if (ticker === '^BVSP') symbol = '^BVSP';
         if (ticker === 'IFIX.SA') symbol = 'XFIX11.SA'; // Proxy for IFIX
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=5y&interval=1mo`;
         
         try {
-          const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-          if (!res.ok) return;
-          const data = await res.json();
-          const result = data.chart?.result?.[0];
+          const now = new Date();
+          const fiveYearsAgo = new Date();
+          fiveYearsAgo.setFullYear(now.getFullYear() - 5);
           
-          if (result && result.timestamp && result.indicators?.quote?.[0]?.close) {
-            const timestamps = result.timestamp;
-            const closes = result.indicators.quote[0].close;
-            
+          const chartData = await yahooFinance.chart(symbol, {
+            period1: fiveYearsAgo,
+            period2: now,
+            interval: '1mo'
+          });
+          
+          if (chartData && chartData.quotes && chartData.quotes.length > 0) {
             const historyData = [];
-            for (let j = 0; j < timestamps.length; j++) {
-              if (closes[j] !== null && closes[j] !== undefined) {
-                const dateObj = new Date(timestamps[j] * 1000);
+            
+            for (const quote of chartData.quotes) {
+              if (quote.close !== null && quote.close !== undefined && quote.date) {
                 // "YYYY-MM"
+                const dateObj = new Date(quote.date);
                 const yyyymm = dateObj.toISOString().substring(0, 7);
                 historyData.push({
                   ticker,
                   date: yyyymm,
-                  price: closes[j]
+                  price: quote.close
                 });
               }
             }
@@ -60,7 +66,7 @@ export async function updateHistory(prisma) {
               });
               historicoInserido++;
               
-              // Calcular retorno12m para todas as classes de ativos
+              // Calcular retorno12m
               if (historyData.length >= 12 && (model === 'etf' || model === 'stock' || model === 'fii')) {
                 const currentPrice = historyData[historyData.length - 1].price;
                 const price12m = historyData[Math.max(0, historyData.length - 13)].price;
@@ -68,20 +74,11 @@ export async function updateHistory(prisma) {
                   const retorno12m = ((currentPrice / price12m) - 1) * 100;
                   
                   if (model === 'etf') {
-                    await prisma.etf.update({
-                      where: { ticker },
-                      data: { retorno12m }
-                    });
+                    await prisma.etf.update({ where: { ticker }, data: { retorno12m } });
                   } else if (model === 'stock') {
-                    await prisma.stock.update({
-                      where: { ticker },
-                      data: { retorno12m }
-                    });
+                    await prisma.stock.update({ where: { ticker }, data: { retorno12m } });
                   } else if (model === 'fii') {
-                    await prisma.fii.update({
-                      where: { ticker },
-                      data: { retorno12m }
-                    });
+                    await prisma.fii.update({ where: { ticker }, data: { retorno12m } });
                   }
                 }
               }
@@ -93,10 +90,10 @@ export async function updateHistory(prisma) {
       });
       
       await Promise.all(promises);
-      console.log(`✅ Histórico atualizado: ${Math.min(i + CONCURRENCY, allItems.length)} / ${allItems.length}`);
+      console.log(`⏳ Histórico atualizado: ${Math.min(i + CONCURRENCY, allItems.length)} / ${allItems.length}`);
     }
     
-    console.log(`🏁 Atualização de histórico concluída! Itens atualizados: ${historicoInserido}`);
+    console.log(`✅ Atualização de histórico concluída! Itens atualizados: ${historicoInserido}`);
     return { success: true, count: historicoInserido };
     
   } catch (error) {
