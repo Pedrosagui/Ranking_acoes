@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useStocks } from '../context/StockContext';
 import SyncProgressBar from './SyncProgressBar';
-import SettingsModal from './SettingsModal';
 import StockDetail from './StockDetail';
 
 function LoadingState() {
@@ -63,11 +62,6 @@ export default function Dashboard() {
     <div className="app-container">
       <header className="header">
         <h1>Aegis</h1>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn btn-outline" onClick={() => setShowSettings(true)}>
-            Configurações
-          </button>
-        </div>
       </header>
 
       {error && (

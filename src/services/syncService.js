@@ -19,7 +19,10 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
     });
 
     const res = await fetch(`${API_URL}/stocks`);
-    if (!res.ok) throw new Error("Erro ao conectar no servidor Aegis");
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(`[Status: ${res.status}] ${errorData.details || errorData.error || res.statusText}`);
+    }
     
     const dbStocks = await res.json();
     
