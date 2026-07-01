@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { getHistorico } from '../data/historico5anos';
+import React, { useMemo, useState } from 'react';
+import { useHistory } from '../hooks/useHistory';
 import { ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
 function calcInvestmentSimulation(stockHistory, ibovHistory) {
@@ -82,8 +82,8 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function StockDetail({ stock, onClose }) {
-  const history = getHistorico(stock.ticker);
-  const ibovHistory = getHistorico('^BVSP');
+  const { history } = useHistory(stock.ticker);
+  const { history: ibovHistory } = useHistory('^BVSP');
   
   const simulation = useMemo(() => calcInvestmentSimulation(history, ibovHistory), [history, ibovHistory]);
 

@@ -51,7 +51,6 @@ model Stock {
 
   updatedAt DateTime @updatedAt
 
-  historico  History[]
   dividendos Dividend[]
 }
 
@@ -60,8 +59,6 @@ model History {
   ticker String
   date   String // "YYYY-MM-DD" or "YYYY-MM"
   price  Float
-
-  stock Stock @relation(fields: [ticker], references: [ticker])
 
   @@unique([ticker, date])
 }

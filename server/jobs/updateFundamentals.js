@@ -43,6 +43,35 @@ function fetchFundamentus() {
   });
 }
 
+function fetchFundamentusFIIs() {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: 'www.fundamentus.com.br',
+      port: 443,
+      path: '/fii_resultado.php',
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Accept': 'text/html',
+        'Accept-Language': 'pt-BR,pt;q=0.9',
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let data = Buffer.alloc(0);
+      res.on('data', (chunk) => {
+        data = Buffer.concat([data, chunk]);
+      });
+      res.on('end', () => {
+        resolve(data.toString('latin1'));
+      });
+    });
+
+    req.on('error', (e) => reject(e));
+    req.end();
+  });
+}
+
 // Busca P/L da Brapi em lote com fallback de token
 async function fetchBrapiPLBatch(tickers) {
   if (tickers.length === 0) return {};
@@ -249,9 +278,63 @@ export async function updateFundamentals(prisma) {
       });
       processedCount++;
     }
+    console.log(`[Cron] ${processedCount} ações atualizadas com fundamentos.`);
     
-    console.log(`[Cron] Fundamentos atualizados com sucesso: ${processedCount} ações.`);
-    return { success: true, processedCount };
+    // --- START FII PROCESSING ---
+    console.log('[Cron] Iniciando atualização de fundamentos (Fundamentus FIIs)...');
+    const htmlFii = await fetchFundamentusFIIs();
+    const tbodyIdxFii = htmlFii.indexOf('<tbody>');
+    const tbodyEndIdxFii = htmlFii.indexOf('</tbody>');
+    
+    if (tbodyIdxFii !== -1 && tbodyEndIdxFii !== -1) {
+      const tbodyFii = htmlFii.substring(tbodyIdxFii, tbodyEndIdxFii);
+      const rowsFii = tbodyFii.split(/<tr[^>]*>/i);
+      
+      const parsedFiis = [];
+      for (const row of rowsFii) {
+        if (!row.includes('</td>')) continue;
+        const tds = row.split(/<td[^>]*>/i).map(td => td.replace(/<[^>]*>/g, '').trim()).filter(td => td !== '');
+        
+        if (tds.length < 10) continue;
+        
+        const ticker = tds[0];
+        const liquidez = parsePtBrNumber(tds[7]);
+        if (liquidez < 100000) continue;
+        
+        const cotacao = parsePtBrNumber(tds[2]);
+        const divYield = parsePtBrNumber(tds[4]);
+        const pvp = parsePtBrNumber(tds[5]);
+        const valorPatrimonialCota = parsePtBrNumber(tds[6]);
+        
+        parsedFiis.push({
+          ticker, cotacao, divYield, pvp, valorPatrimonialCota, liquidez
+        });
+      }
+      
+      let processedFiis = 0;
+      for (const f of parsedFiis) {
+        // Find if Fii exists
+        const exists = await prisma.fii.findUnique({ where: { ticker: f.ticker } });
+        if (exists) {
+          await prisma.fii.update({
+            where: { ticker: f.ticker },
+            data: {
+              divYield: f.divYield,
+              pvp: f.pvp,
+              liquidezMedia: f.liquidez,
+              valorPatrimonialCota: f.valorPatrimonialCota
+            }
+          });
+          processedFiis++;
+        }
+      }
+      console.log(`[Cron] ${processedFiis} FIIs atualizados com fundamentos.`);
+    }
+    // --- END FII PROCESSING ---
+
+    console.log('🏁 Atualização de fundamentos concluída!');
+    return { success: true, count: processedCount };
+    
   } catch (error) {
     console.error('[Cron] Erro ao atualizar fundamentos:', error);
     return { success: false, error: error.message };

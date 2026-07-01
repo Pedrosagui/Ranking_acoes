@@ -21,6 +21,7 @@ app.use(express.json());
 
 import { updateQuotes } from './jobs/updateQuotes.js';
 import { updateFundamentals } from './jobs/updateFundamentals.js';
+import { updateHistory } from './jobs/updateHistory.js';
 
 // --- ROTAS DA API ---
 
@@ -31,6 +32,11 @@ app.get('/api/admin/update-quotes', async (req, res) => {
 
 app.get('/api/admin/update-fundamentals', async (req, res) => {
   const result = await updateFundamentals(prisma);
+  res.json(result);
+});
+
+app.get('/api/admin/update-history', async (req, res) => {
+  const result = await updateHistory(prisma);
   res.json(result);
 });
 
@@ -70,7 +76,7 @@ app.get('/api/etfs', async (req, res) => {
   }
 });
 
-app.get('/api/stocks/:ticker/history', async (req, res) => {
+app.get('/api/history/:ticker', async (req, res) => {
   try {
     const history = await prisma.history.findMany({
       where: { ticker: req.params.ticker.toUpperCase() },
@@ -95,6 +101,12 @@ cron.schedule('0 10-18 * * 1-5', async () => {
 cron.schedule('0 22 * * *', async () => {
   console.log('Iniciando rotina de fundamentos (22:00)...');
   await updateFundamentals(prisma);
+});
+
+// Cron 3: Atualizar Histórico de 5 anos toda sexta-feira às 23:00
+cron.schedule('0 23 * * 5', async () => {
+  console.log('Iniciando rotina de histórico de 5 anos (Sexta 23:00)...');
+  await updateHistory(prisma);
 });
 
 const PORT = process.env.PORT || 3000;
