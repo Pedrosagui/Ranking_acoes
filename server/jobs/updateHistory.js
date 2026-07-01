@@ -23,7 +23,9 @@ export async function updateHistory(prisma) {
       
       const promises = chunk.map(async (item) => {
         const { ticker, model } = item;
-        const symbol = (ticker === '^BVSP' || ticker === 'IFIX.SA') ? ticker : `${ticker}.SA`;
+        let symbol = `${ticker}.SA`;
+        if (ticker === '^BVSP') symbol = '^BVSP';
+        if (ticker === 'IFIX.SA') symbol = 'XFIX11.SA'; // Proxy for IFIX
         const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=5y&interval=1mo`;
         
         try {
