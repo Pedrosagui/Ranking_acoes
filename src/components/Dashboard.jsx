@@ -247,10 +247,15 @@ export default function Dashboard() {
           <span style={{ color: 'var(--yellow)' }}>■</span> 3. Perfis de Investidor
         </h3>
         <p style={{ fontSize: '14px', marginBottom: '16px' }}>
-          O filtro de "Perfil" altera dinamicamente os <strong>Pesos</strong> dos 5 Pilares. 
-          Por exemplo, se você seleciona <em>Dividendista</em>, o pilar de "Proventos" passa a valer 40% da nota final, enquanto "Crescimento" perde importância.
-          Se escolher <em>Magic Formula (Greenblatt)</em>, o motor ignora dividendos e foca 50% no Earning Yield (Valuation) e 50% no ROIC (Qualidade).
+          O filtro de "Perfil" altera dinamicamente os <strong>Pesos</strong> dos 5 Pilares para encontrar a ação perfeita para o seu objetivo:
         </p>
+        <ul style={{ paddingLeft: '24px', fontSize: '14px', marginBottom: '16px' }}>
+          <li style={{ marginBottom: '8px' }}><strong>⚖️ Equilibrado:</strong> Busca empresas balanceadas (30% Valuation, 25% Qualidade, 25% Proventos, 15% Saúde). Ideal para quem não quer abrir mão de nada.</li>
+          <li style={{ marginBottom: '8px' }}><strong>💰 Dividendista:</strong> Foco absoluto na geração de renda passiva. O pilar de "Proventos" passa a valer 45% da nota final, premiando empresas que pagam muito e com consistência.</li>
+          <li style={{ marginBottom: '8px' }}><strong>🚀 Crescimento (Growth):</strong> Ignora os dividendos e foca em empresas eficientes (35% Qualidade) que estão muito baratas (35% Valuation) e têm caixa saudável.</li>
+          <li style={{ marginBottom: '8px' }}><strong>🧙 Magic Formula (Greenblatt):</strong> Uma réplica da famosa fórmula de Joel Greenblatt. O motor ignora dividendos e foca 50% em Qualidade (ROIC) e 50% em Valuation (Earning Yield).</li>
+          <li><strong>🛡️ Conservador:</strong> Penaliza fortemente empresas endividadas. O pilar de Saúde Financeira passa a valer 35%, e Proventos 30%. Ideal para carteiras defensivas.</li>
+        </ul>
       </div>
     </div>
   );

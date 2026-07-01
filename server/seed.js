@@ -31,7 +31,7 @@ const prisma = new PrismaClient({ adapter });
 async function seed() {
   console.log("🌱 Iniciando migração de dados locais para o Supabase...");
 
-  for (const t of TICKERS_B3) {
+    for (const t of TICKERS_B3) {
     const ticker = t.ticker;
     const f = fundamentos[ticker] || { lpa: 0, vpa: 0, roe: 0 };
     
@@ -43,7 +43,18 @@ async function seed() {
         setor: t.setor,
         lpa: f.lpa,
         vpa: f.vpa,
-        roe: f.roe
+        roe: f.roe,
+        pl: f.pl,
+        pvp: f.pvp,
+        divYield: f.divYield,
+        evEbit: f.evEbit,
+        evEbitda: f.evEbitda,
+        margemEbit: f.margemEbit,
+        margemLiquida: f.margemLiquida,
+        liqCorr: f.liqCorr,
+        roic: f.roic,
+        divBrutaPatrim: f.divBrutaPatrim,
+        crescRec5a: f.crescRec5a
       },
       create: {
         ticker,
@@ -51,7 +62,18 @@ async function seed() {
         setor: t.setor,
         lpa: f.lpa,
         vpa: f.vpa,
-        roe: f.roe
+        roe: f.roe,
+        pl: f.pl,
+        pvp: f.pvp,
+        divYield: f.divYield,
+        evEbit: f.evEbit,
+        evEbitda: f.evEbitda,
+        margemEbit: f.margemEbit,
+        margemLiquida: f.margemLiquida,
+        liqCorr: f.liqCorr,
+        roic: f.roic,
+        divBrutaPatrim: f.divBrutaPatrim,
+        crescRec5a: f.crescRec5a
       }
     });
 

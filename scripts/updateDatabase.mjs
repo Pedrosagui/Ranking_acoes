@@ -77,8 +77,20 @@ async function run() {
     const cotacao = parsePtBrNumber(tds[1]);
     const pl = parsePtBrNumber(tds[2]);
     const pvp = parsePtBrNumber(tds[3]);
+    const psr = parsePtBrNumber(tds[4]);
+    const divYield = parsePtBrNumber(tds[5]);
+    const pEbit = parsePtBrNumber(tds[6]);
+    const pAtivo = parsePtBrNumber(tds[7]);
+    const evEbit = parsePtBrNumber(tds[8]);
+    const evEbitda = parsePtBrNumber(tds[9]);
+    const margemEbit = parsePtBrNumber(tds[13]);
+    const margemLiquida = parsePtBrNumber(tds[14]);
+    const liqCorr = parsePtBrNumber(tds[15]);
+    const roic = parsePtBrNumber(tds[16]);
     const roe = parsePtBrNumber(tds[17]); // 17 is ROE
     const liquidez = parsePtBrNumber(tds[18]); // 18 is Liquidez
+    const divBrutaPatrim = parsePtBrNumber(tds[19]); // Fundamentus: 19 = Div.Brut/ Patrim.
+    const crescRec5a = parsePtBrNumber(tds[20]); // 20 = Cresc. Rec.5a
     
     // Filter out very illiquid stocks (< R$ 100.000/dia)
     if (liquidez < 100000) continue;
@@ -99,6 +111,18 @@ async function run() {
       cotacao,
       pl,
       pvp,
+      psr,
+      divYield,
+      pEbit,
+      pAtivo,
+      evEbit,
+      evEbitda,
+      margemEbit,
+      margemLiquida,
+      liqCorr,
+      roic,
+      divBrutaPatrim,
+      crescRec5a,
       lpa: parseFloat(lpa.toFixed(2)),
       vpa: parseFloat(vpa.toFixed(2)),
       roe: parseFloat(roe.toFixed(2))
@@ -126,7 +150,7 @@ ${validStocks.map(s => `  { ticker: '${s.ticker}', empresa: '${s.ticker} S.A.', 
 // Baseado em P/L e P/VP extraídos, revertidos para LPA e VPA.
 
 export const fundamentos = {
-${validStocks.map(s => `  ${s.ticker}: { lpa: ${s.lpa}, vpa: ${s.vpa}, roe: ${s.roe} },`).join('\n')}
+${validStocks.map(s => `  ${s.ticker}: { lpa: ${s.lpa}, vpa: ${s.vpa}, roe: ${s.roe}, pl: ${s.pl}, pvp: ${s.pvp}, divYield: ${s.divYield}, evEbit: ${s.evEbit}, evEbitda: ${s.evEbitda}, margemEbit: ${s.margemEbit}, margemLiquida: ${s.margemLiquida}, liqCorr: ${s.liqCorr}, roic: ${s.roic}, divBrutaPatrim: ${s.divBrutaPatrim}, crescRec5a: ${s.crescRec5a} },`).join('\n')}
 };
 
 export function getFundamentos(ticker) {
