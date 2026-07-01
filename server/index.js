@@ -19,7 +19,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+import { updateQuotes } from './jobs/updateQuotes.js';
+
 // --- ROTAS DA API ---
+
+app.get('/api/admin/update-quotes', async (req, res) => {
+  const result = await updateQuotes(prisma);
+  res.json(result);
+});
 
 app.get('/api/stocks', async (req, res) => {
   try {
@@ -51,7 +58,7 @@ app.get('/api/stocks/:ticker/history', async (req, res) => {
 // Cron 1: Atualizar Cotações 3x ao dia (10:30, 14:00, 18:00) de segunda a sexta
 cron.schedule('30 10,14,18 * * 1-5', async () => {
   console.log('Iniciando rotina de cotações...');
-  // Aqui migraremos a lógica de fetch da Brapi para atualizar cotacaoAtual
+  await updateQuotes(prisma);
 });
 
 // Cron 2: Atualizar Fundamentos (Fundamentus) todo sábado às 02:00
