@@ -8,16 +8,93 @@ export default function FIITable() {
   const { filteredFIIs, isLoading } = useFIIs();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedFII, setSelectedFII] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   if (isLoading) {
     return <div className="loading-screen" style={{padding: '40px 0'}}>Carregando FIIs...</div>;
   }
 
-  const totalPages = Math.ceil(filteredFIIs.length / ITEMS_PER_PAGE);
-  const currentData = filteredFIIs.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const searchedFIIs = filteredFIIs.filter(fii => 
+    fii.ticker.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (fii.nome && fii.nome.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const totalPages = Math.ceil(searchedFIIs.length / ITEMS_PER_PAGE);
+  const currentData = searchedFIIs.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const renderMobileCard = (fii) => {
+    const percent = Math.min(100, Math.max(0, Math.round(fii.scoreComposto)));
+    let dotColor = 'var(--yellow)';
+    let gradient = 'linear-gradient(90deg, #F5A62340 0%, #F5A623 100%)';
+    if (percent >= 70) {
+      dotColor = 'var(--green)';
+      gradient = 'linear-gradient(90deg, #16A34A40 0%, #16A34A 100%)';
+    } else if (percent <= 40) {
+      dotColor = 'var(--red)';
+      gradient = 'linear-gradient(90deg, #E0000040 0%, #E00000 100%)';
+    }
+
+    return (
+      <div className="mobile-card" onClick={() => setSelectedFII(fii)} key={fii.ticker}>
+        <div className="mobile-card-indicator" style={{ backgroundColor: dotColor }}></div>
+        <div className="mobile-card-content">
+          <div className="mobile-card-header">
+            <span className="mobile-card-title" style={{ display: 'flex', alignItems: 'center' }}>
+              <span style={{ color: fii.posicao <= 3 ? 'var(--yellow)' : 'inherit', marginRight: '6px' }}>{fii.posicao <= 3 ? '★ ' : ''}#{fii.posicao}</span> 
+              <div style={{width: 20, height: 20, borderRadius: '50%', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '8px', fontSize: '10px', fontWeight: 'bold', color: 'var(--text-primary)', border: '1px solid var(--border-light)'}}>{fii.ticker ? fii.ticker.charAt(0) : '?'}</div>
+              {fii.ticker}
+            </span>
+            <span className="mobile-card-price">R$ {fii.cotacaoAtual?.toFixed(2) || '---'}</span>
+          </div>
+          <div className="mobile-card-subtitle">{fii.nome?.substring(0, 25)}</div>
+          
+          <div className="mobile-card-score-row">
+            <div className="mobile-card-score-value">
+              {fii.scoreComposto} <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 400 }}>score</span>
+            </div>
+            <div className="mobile-card-progress-track">
+              <div className="mobile-card-progress-fill" style={{ width: `${percent}%`, background: gradient }}>
+                <div className="mobile-card-progress-dot" style={{ backgroundColor: dotColor }}></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mobile-card-stats">
+            <div className="mobile-card-stat">
+              <span className="mobile-card-stat-label">Ret. Dia</span>
+              <span className={`mobile-card-stat-value ${(fii.retornoDiario || 0) >= 0 ? 'text-green' : 'text-red'}`}>
+                {(fii.retornoDiario || 0) >= 0 ? '+' : ''}{(fii.retornoDiario || 0).toFixed(2)}%
+              </span>
+            </div>
+            <div className="mobile-card-stat">
+              <span className="mobile-card-stat-label">Ret. 12M</span>
+              <span className={`mobile-card-stat-value ${(fii.retorno12m || 0) >= 0 ? 'text-green' : 'text-red'}`}>
+                {(fii.retorno12m || 0) >= 0 ? '+' : ''}{(fii.retorno12m || 0).toFixed(1)}%
+              </span>
+            </div>
+            <div className="mobile-card-stat">
+              <span className="mobile-card-stat-label">Div. Yield</span>
+              <span className="mobile-card-stat-value text-green">{(fii.divYield || 0).toFixed(1)}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+        <input 
+          type="search" 
+          className="search-input" 
+          placeholder="Buscar por Ticker ou Nome do FII..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ width: '100%', padding: '10px 16px', borderRadius: '8px', border: '1px solid var(--border-light)', background: 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none' }}
+        />
+      </div>
+
       <div className="table-container desktop-only">
         <table className="valuation-table">
           <thead>
@@ -69,7 +146,10 @@ export default function FIITable() {
                   <div className="score-badge" style={{
                     background: `conic-gradient(var(--yellow) ${fii.scoreComposto * 3.6}deg, var(--bg-app) 0deg)`,
                     border: 'none',
-                    padding: '4px'
+                    padding: '4px',
+                    minWidth: '48px',
+                    minHeight: '48px',
+                    flexShrink: 0
                   }}>
                     <div style={{ 
                       background: 'var(--bg-surface)', 
@@ -96,6 +176,15 @@ export default function FIITable() {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="mobile-card-list mobile-only">
+        {currentData.map((fii) => renderMobileCard(fii))}
+        {currentData.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+            Nenhum FII encontrado.
+          </div>
+        )}
       </div>
 
       {/* Pagination */}

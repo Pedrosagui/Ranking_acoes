@@ -435,6 +435,11 @@ export default function Dashboard() {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
           <span>Carteira</span>
         </div>
+
+        <div className={`bottom-nav-item ${activeTab === 'metodologia' ? 'active' : ''}`} onClick={() => setActiveTab('metodologia')}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+          <span>Metodologia</span>
+        </div>
       </nav>
 
       {/* Modal Detalhes */}

@@ -35,6 +35,15 @@ export default function Portfolio() {
 
   return (
     <div className="portfolio-page" style={{ padding: '24px 0' }}>
+      
+      <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--yellow)', borderRadius: '8px', padding: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <span style={{ fontSize: '24px' }}>🚧</span>
+        <div>
+          <h3 style={{ margin: '0 0 4px 0', color: 'var(--yellow)', fontSize: '16px' }}>Módulo em Desenvolvimento</h3>
+          <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)' }}>Esta página está sendo construída e pode apresentar instabilidades ou dados incompletos.</p>
+        </div>
+      </div>
+
       {/* Header com resumo */}
       <div className="portfolio-summary-card">
         <div className="portfolio-summary-grid">
