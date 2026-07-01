@@ -38,43 +38,13 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
       // O banco já tem lpa, vpa, roe. Mas o enrichStock original 
       // esperava que passássemos cotacao (ou logPrice)
       const mockResultBrapi = {
-        symbol: s.ticker,
-        shortName: s.empresa,
-        regularMarketPrice: s.cotacaoAtual || 10,
-      };
-      // enrichStock em valuation.js busca os fundamentos do arquivo local
-      // mas como agora vem do banco, precisamos ter certeza que ele usa os dados do backend
-      // Vou adaptar o enrichStock direto aqui, pois os dados já estão no banco!
-      
-      const lpa = s.lpa || 0;
-      const vpa = s.vpa || 0;
-      const roe = s.roe || 0;
       const precoAtual = s.cotacaoAtual || 10;
-      
-      // Graham
-      let precoJustoGraham = 0;
-      let margemGraham = -100;
-      if (lpa > 0 && vpa > 0) {
-        precoJustoGraham = Math.sqrt(22.5 * lpa * vpa);
-        margemGraham = ((precoJustoGraham - precoAtual) / precoAtual) * 100;
-      }
+      const lpa = s.financialData?.lpa || 0;
+      const vpa = s.financialData?.vpa || 0;
+      const roe = s.financialData?.roe || 0;
 
-      // Bazin
-      let precoTetoBazin = 0;
-      let margemBazin = -100;
-      const dividendoProjetado = lpa * 0.5; // Aproximação (50% payout) caso não tenha div histórico
-      if (dividendoProjetado > 0) {
-        precoTetoBazin = dividendoProjetado / 0.06;
-        margemBazin = ((precoTetoBazin - precoAtual) / precoAtual) * 100;
-      }
-      
-      // Score simples
-      let score = 0;
-      if (roe > 10) score += 3;
-      if (margemGraham > 20) score += 3;
-      if (margemBazin > 10) score += 4;
-      
-      return {
+      // Chama a função central do valuation que calcula Score 0-100, Bazin e Graham reais
+      return enrichStock({
         ticker: s.ticker,
         empresa: s.empresa,
         setor: s.setor,
@@ -82,13 +52,7 @@ export async function syncAllStocks(token, onProgress, onBatchComplete) {
         lpa,
         vpa,
         roe,
-        precoJustoGraham: parseFloat(precoJustoGraham.toFixed(2)),
-        margemGraham: parseFloat(margemGraham.toFixed(2)),
-        precoTetoBazin: parseFloat(precoTetoBazin.toFixed(2)),
-        margemBazin: parseFloat(margemBazin.toFixed(2)),
-        score,
-        consistente: score >= 7
-      };
+      });
     });
 
     onBatchComplete(enriched);

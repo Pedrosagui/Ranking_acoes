@@ -6,8 +6,10 @@
  * @param {Array<{ano: number, totalPago: number}>} dividendosHistoricos
  * @returns {number}
  */
-export function calcMediaDividendos(dividendosHistoricos) {
-  if (!dividendosHistoricos || dividendosHistoricos.length === 0) return 0;
+export function calcMediaDividendos(dividendosHistoricos, lpa = 0) {
+  if (!dividendosHistoricos || dividendosHistoricos.length === 0) {
+    return lpa > 0 ? lpa * 0.5 : 0; // Fallback: 50% de payout projetado
+  }
   const soma = dividendosHistoricos.reduce((acc, d) => acc + (d.totalPago || 0), 0);
   return soma / 10; // sempre divide por 10 conforme spec
 }
@@ -96,7 +98,7 @@ export function calcScore(stock) {
   if (!cotacaoAtual || cotacaoAtual <= 0) return 0;
 
   // Calcula métricas intermediárias
-  const mediaDividendos = calcMediaDividendos(dividendosHistoricos);
+  const mediaDividendos = calcMediaDividendos(dividendosHistoricos, lpa);
   const precoTetoBazin = calcBazin(mediaDividendos);
   const precoJustoGraham = calcGraham(lpa, vpa);
   const margemBazin = calcMargemBazin(precoTetoBazin, cotacaoAtual);
@@ -107,10 +109,11 @@ export function calcScore(stock) {
   const mediaMargens = (margemBazin + margemGraham) / 2;
   const pontoDesconto = clamp((mediaMargens / 50) * 70, 0, 70);
 
-  // ── Peso Qualidade / ROE (20 pts) ────────────────────────────
-  // ROE >= 15% = pontuação máxima
+  // ── Peso Qualidade / ROE (20 a 30 pts) ────────────────────────────
+  // ROE >= 15% = pontuação máxima. Se não tiver histórico, peso vai para 30.
   const roeValor = roe || 0;
-  const pontoROE = clamp((roeValor / 15) * 20, 0, 20);
+  const pesoMaxRoe = (!dividendosHistoricos || dividendosHistoricos.length === 0) ? 30 : 20;
+  const pontoROE = clamp((roeValor / 15) * pesoMaxRoe, 0, pesoMaxRoe);
 
   // ── Peso Consistência (10 pts) ───────────────────────────────
   const pontoConsistencia = isConsistente(dividendosHistoricos) ? 10 : 0;
@@ -124,7 +127,7 @@ export function calcScore(stock) {
  * @returns {Object} Ação com todos os campos de valuation calculados
  */
 export function enrichStock(rawStock) {
-  const mediaDividendos = calcMediaDividendos(rawStock.dividendosHistoricos);
+  const mediaDividendos = calcMediaDividendos(rawStock.dividendosHistoricos, rawStock.lpa);
   const precoTetoBazin = calcBazin(mediaDividendos);
   const precoJustoGraham = calcGraham(rawStock.lpa, rawStock.vpa);
   const margemBazin = calcMargemBazin(precoTetoBazin, rawStock.cotacaoAtual);
