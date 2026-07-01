@@ -16,14 +16,7 @@ const Tooltip = ({ children, text }) => (
   </div>
 );
 
-function LoadingState() {
-  return (
-    <div className="center-content">
-      <div className="loading-spinner-large"></div>
-      <p style={{ marginTop: '16px' }}>Atualizando dados do servidor...</p>
-    </div>
-  );
-}
+import SyncModal from './SyncModal';
 
 function StatusIndicator({ value, thresholds, inverse = false }) {
   if (value === null || value === undefined) return <span style={{ color: 'var(--text-muted)' }}>-</span>;
@@ -80,17 +73,13 @@ export default function Dashboard() {
     setCurrentPage(1);
   }, [activeTab, activeProfile, filteredStocks.length, searchQuery]);
 
-  if (isLoading || stocks.length === 0) return <LoadingState />;
+  if (isLoading || stocks.length === 0) return <SyncModal />;
 
   const searchedStocks = filteredStocks.filter(s => 
     s.ticker.toLowerCase().includes(searchQuery.toLowerCase()) || 
     (s.empresa && s.empresa.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const piotroskiStocks = rankPiotroskiGraham(stocks).filter(s => 
-    s.ticker.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    (s.empresa && s.empresa.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
 
   const renderPagination = (totalItems) => {
     const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
@@ -302,95 +291,6 @@ export default function Dashboard() {
     );
   };
 
-  const renderPiotroski = () => {
-    const currentData = piotroskiStocks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-
-    return (
-      <>
-        <div className="dashboard-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-          <div className="search-container" style={{ flex: '1', minWidth: '250px' }}>
-            <input 
-              type="search" 
-              className="search-input" 
-              placeholder="Buscar por Ticker ou Empresa..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ width: '100%', padding: '10px 16px', borderRadius: '8px', border: '1px solid var(--border-light)', background: 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none' }}
-            />
-          </div>
-        </div>
-      
-        {currentPage === 1 && searchQuery === '' && piotroskiStocks.length > 0 && <Top10Chart stocks={piotroskiStocks} title="Top 10 — Graham + Piotroski" scoreField="fScore" scoreSuffix="F-Score" />}
-        
-        {/* Desktop Table */}
-        <div className="table-container desktop-only">
-          <table className="valuation-table">
-            <thead>
-              <tr>
-                <th>Posição</th>
-                <th>Ativo</th>
-                <th>Cotação</th>
-                <th><Tooltip text="Retorno sobre o Patrimônio Líquido.">ROE</Tooltip></th>
-                <th><Tooltip text="Liquidez Corrente. Capacidade da empresa de pagar suas dívidas de curto prazo.">Liq. Corr.</Tooltip></th>
-                <th><Tooltip text="Dívida Bruta dividida pelo Patrimônio.">Alavancagem</Tooltip></th>
-                <th><Tooltip text="Preço Justo calculado a partir do VPA e LPA (Fórmula de Benjamin Graham).">Valuation Graham</Tooltip></th>
-                <th><Tooltip text="Nota de 0 a 9 que mede a força financeira da empresa (Fórmula de Joseph Piotroski).">Piotroski F-Score</Tooltip></th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentData.map((stock, idx) => {
-                const index = (currentPage - 1) * ITEMS_PER_PAGE + idx;
-                return (
-                  <tr key={stock.ticker} onClick={() => setSelectedStock(stock)}>
-                    <td style={{ color: index < 3 ? 'var(--yellow)' : 'inherit', fontWeight: index < 3 ? 600 : 'normal' }}>
-                      {index < 3 ? '★' : ''} {index + 1}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {stock.logoUrl ? (
-                          <img src={stock.logoUrl} alt={stock.ticker} style={{width: 28, height: 28, borderRadius: '50%', objectFit: 'contain', background: 'white'}} />
-                        ) : (
-                          <div style={{width: 28, height: 28, borderRadius: '50%', background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)'}}>{stock.ticker ? stock.ticker.charAt(0) : '?'}</div>
-                        )}
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{stock.ticker}</span>
-                          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{stock.empresa?.substring(0, 25)}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>R$ {stock.cotacaoAtual?.toFixed(2) || 'N/A'}</td>
-                    <td><StatusIndicator value={stock.roe?.toFixed(1)} thresholds={{good: 15, bad: 5}}/>%</td>
-                    <td><StatusIndicator value={stock.liqCorr?.toFixed(2)} thresholds={{good: 1.5, bad: 1}}/></td>
-                    <td>{stock.divBrutaPatrim?.toFixed(2) || 'N/A'}</td>
-                    
-                    <td>
-                      R$ {stock.precoJustoGraham?.toFixed(2) || '0.00'}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span className={`status-dot ${stock.fScore >= 7 ? 'status-green' : stock.fScore >= 4 ? 'status-yellow' : 'status-red'}`}></span>
-                        <span style={{ fontWeight: 600 }}>{stock.fScore} / 9</span>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Mobile Card List */}
-        <div className="mobile-card-list mobile-only">
-          {currentData.map((stock, idx) => (
-            <MobileCard key={stock.ticker} stock={stock} index={(currentPage - 1) * ITEMS_PER_PAGE + idx} scoreField="fScore" />
-          ))}
-        </div>
-
-        {renderPagination(piotroskiStocks.length)}
-      </>
-    );
-  };
-
   const renderMetodologia = () => (
     <div style={{ maxWidth: '800px', margin: '0 auto', color: 'var(--text-primary)', lineHeight: 1.6 }}>
       <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '24px' }}>Metodologia Aegis</h2>
@@ -440,7 +340,8 @@ export default function Dashboard() {
           <li style={{ marginBottom: '8px' }}><strong>💰 Dividendista:</strong> Foco absoluto na geração de renda passiva. O pilar de "Proventos" passa a valer 45% da nota final, premiando empresas que pagam muito e com consistência.</li>
           <li style={{ marginBottom: '8px' }}><strong>🚀 Crescimento (Growth):</strong> Ignora os dividendos e foca em empresas eficientes (35% Qualidade) que estão muito baratas (35% Valuation) e têm caixa saudável.</li>
           <li style={{ marginBottom: '8px' }}><strong>🧙 Magic Formula (Greenblatt):</strong> Uma réplica da famosa fórmula de Joel Greenblatt. O motor ignora dividendos e foca 50% em Qualidade (ROIC) e 50% em Valuation (Earning Yield).</li>
-          <li><strong>🛡️ Conservador:</strong> Penaliza fortemente empresas endividadas. O pilar de Saúde Financeira passa a valer 35%, e Proventos 30%. Ideal para carteiras defensivas.</li>
+          <li style={{ marginBottom: '8px' }}><strong>🛡️ Conservador:</strong> Penaliza fortemente empresas endividadas. O pilar de Saúde Financeira passa a valer 35%, e Proventos 30%. Ideal para carteiras defensivas.</li>
+          <li><strong>📈 Graham + Piotroski:</strong> Substitui os 5 pilares por um checklist binário (F-Score) criado por Joseph Piotroski que avalia 9 critérios de saúde financeira. A pontuação original de 0 a 9 é escalonada de 0 a 100 no ranking, servindo como um excelente filtro de "empresas baratas que estão melhorando".</li>
         </ul>
       </div>
     </div>
@@ -463,13 +364,7 @@ export default function Dashboard() {
             <IconSpeed />
             <span>Ranking Compostos</span>
           </div>
-          <div 
-            className={`sidebar-item ${activeTab === 'piotroski' ? 'active' : ''}`}
-            onClick={() => setActiveTab('piotroski')}
-          >
-            <IconValuation />
-            <span>Graham + Piotroski</span>
-          </div>
+
           <div 
             className={`sidebar-item ${activeTab === 'metodologia' ? 'active' : ''}`}
             onClick={() => setActiveTab('metodologia')}
@@ -483,7 +378,7 @@ export default function Dashboard() {
       {/* Main Content */}
       <main className="main-content pb-mobile">
         <header className="header">
-          {activeTab === 'graham_bazin' ? 'Aegis / Speed Insights / Ranking Compostos' : activeTab === 'piotroski' ? 'Aegis / Speed Insights / Graham + Piotroski' : 'Aegis / Analytics / Metodologia'}
+          {activeTab === 'graham_bazin' ? 'Aegis / Speed Insights / Ranking Compostos' : 'Aegis / Analytics / Metodologia'}
         </header>
 
         <div className="content-inner">
@@ -494,13 +389,10 @@ export default function Dashboard() {
           )}
 
           {isSyncing && stocks.length > 0 && (
-            <div style={{ marginBottom: '24px' }}>
-              <SyncProgressBar />
-            </div>
+            <SyncModal />
           )}
 
           {activeTab === 'graham_bazin' && renderGrahamBazin()}
-          {activeTab === 'piotroski' && renderPiotroski()}
           {activeTab === 'metodologia' && renderMetodologia()}
         </div>
       </main>
@@ -511,10 +403,7 @@ export default function Dashboard() {
           <IconSpeed />
           <span>Ranking</span>
         </div>
-        <div className={`bottom-nav-item ${activeTab === 'piotroski' ? 'active' : ''}`} onClick={() => setActiveTab('piotroski')}>
-          <IconValuation />
-          <span>Piotroski</span>
-        </div>
+
         <div className={`bottom-nav-item ${activeTab === 'metodologia' ? 'active' : ''}`} onClick={() => setActiveTab('metodologia')}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
           <span>Metodologia</span>

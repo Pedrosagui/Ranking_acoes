@@ -22,6 +22,11 @@ export const PERFIS_SCORE = {
     label: '🛡️ Conservador',
     pesos: { valuation: 0.20, qualidade: 0.15, proventos: 0.30, saude: 0.35, crescimento: 0.00 }
   },
+  piotroski: {
+    label: '📈 Graham + Piotroski',
+    isPiotroski: true,
+    pesos: { valuation: 0, qualidade: 0, proventos: 0, saude: 0, crescimento: 0 }
+  },
 };
 
 /**
@@ -196,13 +201,18 @@ export function calcCompositeScore(stocks, pesos = PERFIS_SCORE.equilibrado.peso
     const s4 = calcPilar4(stock);
     const s5 = calcPilar5(stock, percentilEY);
     
-    const scoreComposto = Math.round(
-      pesos.valuation   * s1 +
-      pesos.qualidade   * s2 +
-      pesos.proventos   * s3 +
-      pesos.saude       * s4 +
-      pesos.crescimento * s5
-    );
+    let scoreComposto = 0;
+    if (pesos.isPiotroski) {
+      scoreComposto = Math.round((stock.fScore / 9) * 100);
+    } else {
+      scoreComposto = Math.round(
+        pesos.valuation   * s1 +
+        pesos.qualidade   * s2 +
+        pesos.proventos   * s3 +
+        pesos.saude       * s4 +
+        pesos.crescimento * s5
+      );
+    }
     
     return {
       ...stock,
