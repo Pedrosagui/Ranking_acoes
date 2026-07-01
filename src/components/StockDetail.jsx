@@ -109,7 +109,7 @@ export default function StockDetail({ stock, onClose }) {
           </div>
           <div className="metric-card" style={{ background: 'var(--bg-app)', border: 'none' }}>
             <div className="metric-title">Score Final</div>
-            <div className="metric-value" style={{ color: 'var(--primary)' }}>{stock.scoreComposto || stock.score} <span style={{fontSize:'12px', fontWeight:400}}>pts</span></div>
+            <div className="metric-value" style={{ color: '#8A2BE2' }}>{stock.scoreComposto || stock.score} <span style={{fontSize:'12px', fontWeight:400}}>pts</span></div>
           </div>
           <div className="metric-card" style={{ background: 'var(--bg-app)', border: 'none' }}>
             <div className="metric-title">Upside Graham</div>
@@ -132,7 +132,7 @@ export default function StockDetail({ stock, onClose }) {
               <div style={{ display: 'flex', gap: '16px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>{stock.ticker}</span>
-                  <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--primary)' }}>R$ {simulation.finalStock.toFixed(2)}</span>
+                  <span style={{ fontSize: '18px', fontWeight: 700, color: '#8A2BE2' }}>R$ {simulation.finalStock.toFixed(2)}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>IBOV</span>
@@ -149,9 +149,13 @@ export default function StockDetail({ stock, onClose }) {
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={simulation.data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                   <defs>
+                    <linearGradient id="strokeGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#8A2BE2" />
+                      <stop offset="100%" stopColor="#4169E1" />
+                    </linearGradient>
                     <linearGradient id="colorStock" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#8A2BE2" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#4169E1" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-light)" opacity={0.5} />
@@ -174,7 +178,7 @@ export default function StockDetail({ stock, onClose }) {
                   
                   <Line type="monotone" dataKey="cdiValue" name="100% CDI" stroke="var(--text-primary)" strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
                   <Line type="monotone" dataKey="ibovValue" name="IBOVESPA" stroke="var(--green)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-                  <Area type="monotone" dataKey="stockValue" name={stock.ticker} stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorStock)" activeDot={{ r: 6, strokeWidth: 0, fill: 'var(--primary)' }} />
+                  <Area type="monotone" dataKey="stockValue" name={stock.ticker} stroke="url(#strokeGradient)" strokeWidth={3} fillOpacity={1} fill="url(#colorStock)" activeDot={{ r: 6, strokeWidth: 0, fill: '#8A2BE2' }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
