@@ -69,7 +69,13 @@ export async function updateFundamentals(prisma) {
       if (ticker.startsWith('BDR')) continue;
       
       const cotacao = parsePtBrNumber(tds[1]);
-      const pl = parsePtBrNumber(tds[2]);
+      let pl = parsePtBrNumber(tds[2]);
+      
+      // Override manual para erros conhecidos do Fundamentus
+      if (ticker === 'TIMS3' && pl > 2000) {
+        pl = 12.08;
+      }
+      
       const pvp = parsePtBrNumber(tds[3]);
       const psr = parsePtBrNumber(tds[4]);
       const divYield = parsePtBrNumber(tds[5]);
