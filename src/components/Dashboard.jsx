@@ -11,8 +11,6 @@ const IconSpeed = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="no
 const IconSettings = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
 const IconLogo = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
 
-const IconHelp = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
-
 const Tooltip = ({ children, text }) => (
   <div className="tooltip-container" title={text}>
     {children}
@@ -106,14 +104,14 @@ export default function Dashboard() {
               <th>Posição</th>
               <th>Ativo</th>
               <th>Cotação</th>
-              <th><Tooltip text="Relação percentual entre os dividendos pagos nos últimos 12 meses e o preço atual da ação.">Div. Yield <IconHelp/></Tooltip></th>
-              <th><Tooltip text="Preço / Lucro. Quantos anos levaria para reaver o capital investido considerando o lucro atual.">P/L <IconHelp/></Tooltip></th>
-              <th><Tooltip text="Porcentagem de lucro líquido em relação à receita total da empresa.">M. Líquida <IconHelp/></Tooltip></th>
-              <th><Tooltip text="Retorno sobre o Patrimônio Líquido. Mede o quão eficiente a empresa é em gerar lucro com os recursos dos acionistas.">ROE <IconHelp/></Tooltip></th>
-              <th><Tooltip text="Dívida Bruta dividida pelo Patrimônio. Mede o risco de endividamento da empresa.">Alavancagem <IconHelp/></Tooltip></th>
-              <th><Tooltip text="Preço Teto baseado no dividendo mínimo de 6% (Fórmula de Décio Bazin).">Valuation Bazin <IconHelp/></Tooltip></th>
-              <th><Tooltip text="Preço Justo calculado a partir do VPA e LPA (Fórmula de Benjamin Graham).">Valuation Graham <IconHelp/></Tooltip></th>
-              <th><Tooltip text="Pontuação estatística de 0 a 100 baseada nos 5 pilares com os pesos do Perfil selecionado.">Score Final <IconHelp/></Tooltip></th>
+              <th><Tooltip text="Relação percentual entre os dividendos pagos nos últimos 12 meses e o preço atual da ação.">Div. Yield</Tooltip></th>
+              <th><Tooltip text="Preço / Lucro. Quantos anos levaria para reaver o capital investido considerando o lucro atual.">P/L</Tooltip></th>
+              <th><Tooltip text="Porcentagem de lucro líquido em relação à receita total da empresa.">M. Líquida</Tooltip></th>
+              <th><Tooltip text="Retorno sobre o Patrimônio Líquido. Mede o quão eficiente a empresa é em gerar lucro com os recursos dos acionistas.">ROE</Tooltip></th>
+              <th><Tooltip text="Dívida Bruta dividida pelo Patrimônio. Mede o risco de endividamento da empresa.">Alavancagem</Tooltip></th>
+              <th><Tooltip text="Preço Teto baseado no dividendo mínimo de 6% (Fórmula de Décio Bazin).">Valuation Bazin</Tooltip></th>
+              <th><Tooltip text="Preço Justo calculado a partir do VPA e LPA (Fórmula de Benjamin Graham).">Valuation Graham</Tooltip></th>
+              <th><Tooltip text="Pontuação estatística de 0 a 100 baseada nos 5 pilares com os pesos do Perfil selecionado.">Score Final</Tooltip></th>
             </tr>
           </thead>
           <tbody>
@@ -166,11 +164,11 @@ export default function Dashboard() {
               <th>Posição</th>
               <th>Ativo</th>
               <th>Cotação</th>
-              <th><Tooltip text="Retorno sobre o Patrimônio Líquido.">ROE <IconHelp/></Tooltip></th>
-              <th><Tooltip text="Liquidez Corrente. Capacidade da empresa de pagar suas dívidas de curto prazo.">Liq. Corr. <IconHelp/></Tooltip></th>
-              <th><Tooltip text="Dívida Bruta dividida pelo Patrimônio.">Alavancagem <IconHelp/></Tooltip></th>
-              <th><Tooltip text="Preço Justo calculado a partir do VPA e LPA (Fórmula de Benjamin Graham).">Valuation Graham <IconHelp/></Tooltip></th>
-              <th><Tooltip text="Nota de 0 a 9 que mede a força financeira da empresa (Fórmula de Joseph Piotroski).">Piotroski F-Score <IconHelp/></Tooltip></th>
+              <th><Tooltip text="Retorno sobre o Patrimônio Líquido.">ROE</Tooltip></th>
+              <th><Tooltip text="Liquidez Corrente. Capacidade da empresa de pagar suas dívidas de curto prazo.">Liq. Corr.</Tooltip></th>
+              <th><Tooltip text="Dívida Bruta dividida pelo Patrimônio.">Alavancagem</Tooltip></th>
+              <th><Tooltip text="Preço Justo calculado a partir do VPA e LPA (Fórmula de Benjamin Graham).">Valuation Graham</Tooltip></th>
+              <th><Tooltip text="Nota de 0 a 9 que mede a força financeira da empresa (Fórmula de Joseph Piotroski).">Piotroski F-Score</Tooltip></th>
             </tr>
           </thead>
           <tbody>

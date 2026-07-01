@@ -398,7 +398,7 @@ select.vercel-select:focus {
   
   /* Fade in */
   opacity: 0;
-  transition: opacity 0.2s, visibility 0.2s;
+  transition: opacity 0.2s ease 0.5s, visibility 0.2s ease 0.5s;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
@@ -407,6 +407,7 @@ select.vercel-select:focus {
 .tooltip-container:focus .tooltip-text {
   visibility: visible;
   opacity: 1;
+  transition-delay: 0.3s; /* Quicker delay when hovering explicitly */
 }
 
 /* Arrow */
