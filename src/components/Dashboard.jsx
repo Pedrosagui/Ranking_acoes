@@ -2,7 +2,14 @@ import React, { useState } from 'react';
 import { useStocks } from '../context/StockContext';
 import SyncProgressBar from './SyncProgressBar';
 import StockDetail from './StockDetail';
-import { rankPiotroskiGraham } from '../utils/valuation';
+import { rankPiotroskiGraham, PERFIS_SCORE } from '../utils/valuation';
+
+// --- SVGs for Icons (Vercel Style) ---
+const IconOverview = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>;
+const IconValuation = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>;
+const IconSpeed = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>;
+const IconSettings = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
+const IconLogo = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
 
 function LoadingState() {
   return (
@@ -13,44 +20,44 @@ function LoadingState() {
   );
 }
 
+function StatusIndicator({ value, thresholds, inverse = false }) {
+  if (value === null || value === undefined) return <span style={{ color: 'var(--text-muted)' }}>-</span>;
+  
+  let colorClass = 'text-yellow'; // Default/Middle
+  const { good, bad } = thresholds;
+  
+  if (inverse) {
+    if (value <= good) colorClass = 'text-green';
+    else if (value >= bad) colorClass = 'text-red';
+  } else {
+    if (value >= good) colorClass = 'text-green';
+    else if (value <= bad) colorClass = 'text-red';
+  }
+
+  return <span className={colorClass} style={{ fontWeight: 500 }}>{value}</span>;
+}
+
 function Top10Chart({ stocks, title, scoreField, scoreSuffix = 'pts' }) {
   const top10 = stocks.slice(0, 10);
   
   return (
-    <div className="top-10-section">
-      <h3 className="top-10-title">{title}</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+    <div className="card">
+      <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '24px' }}>{title}</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
         {top10.map((stock, i) => (
-          <div key={stock.ticker} style={{ padding: '12px', border: '1px solid var(--border-light)', borderRadius: '6px', background: 'var(--bg-base)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <strong>#{i + 1} {stock.ticker}</strong>
-              <span className="text-green">{stock[scoreField]} {scoreSuffix}</span>
+          <div key={stock.ticker} className="metric-card" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>#{i + 1} &middot; {stock.setor?.substring(0, 15)}</div>
+              <div className="metric-value text-green" style={{ fontSize: '18px' }}>
+                <span className="status-dot status-green"></span>
+                {stock[scoreField]}
+              </div>
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-              <div>Cot: R$ {stock.cotacaoAtual?.toFixed(2)}</div>
-              <div>Setor: {stock.setor?.substring(0, 15)}</div>
-            </div>
+            <div style={{ fontSize: '20px', fontWeight: 600 }}>{stock.ticker}</div>
+            <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>R$ {stock.cotacaoAtual?.toFixed(2)}</div>
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-function StockLogo({ ticker }) {
-  const letter = ticker.charAt(0).toUpperCase();
-  const colors = ['#e53935', '#d81b60', '#8e24aa', '#5e35b1', '#3949ab', '#1e88e5', '#039be5', '#00acc1', '#00897b', '#43a047', '#f4511e'];
-  const colorIndex = ticker.charCodeAt(0) % colors.length;
-  const bgColor = colors[colorIndex];
-  
-  return (
-    <div style={{ 
-      width: '28px', height: '28px', borderRadius: '50%', 
-      backgroundColor: bgColor, color: 'white', 
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontWeight: 'bold', fontSize: '14px', flexShrink: 0
-    }}>
-      {letter}
     </div>
   );
 }
@@ -66,54 +73,70 @@ export default function Dashboard() {
 
   const renderGrahamBazin = () => (
     <>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Perfil:</span>
+          <select 
+            className="vercel-select"
+            value={activeProfile} 
+            onChange={(e) => setProfile(e.target.value)}
+          >
+            {Object.entries(PERFIS_SCORE).map(([key, perfil]) => (
+              <option key={key} value={key}>{perfil.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {filteredStocks.length > 0 && <Top10Chart stocks={filteredStocks} title={`Top 10 — Ranking ${PERFIS_SCORE[activeProfile]?.label || 'Valuation'}`} scoreField="scoreComposto" scoreSuffix="pts" />}
+      
       <div className="table-container">
         <table className="valuation-table">
           <thead>
             <tr>
-              <th>Rank</th>
-              <th>Ticker</th>
+              <th>Posição</th>
+              <th>Ativo</th>
               <th>Cotação</th>
-              <th>Dividend<br/>Yield</th>
+              <th>Div. Yield</th>
               <th>P/L</th>
-              <th>Margem<br/>Líquida</th>
+              <th>M. Líquida</th>
               <th>ROE</th>
-              <th>Dív. Bruta /<br/>Patrim.</th>
-              <th style={{ backgroundColor: '#fceb8d', color: '#333' }}>Valuation<br/>Bazin</th>
-              <th style={{ backgroundColor: '#8bbcf6', color: '#333' }}>Valuation<br/>Graham</th>
-              <th style={{ backgroundColor: '#f18a70', color: '#fff' }}>Score<br/>Final</th>
+              <th>Alavancagem</th>
+              <th>Valuation Bazin</th>
+              <th>Valuation Graham</th>
+              <th>Score Final</th>
             </tr>
           </thead>
           <tbody>
             {filteredStocks.map((stock, index) => (
               <tr key={stock.ticker} onClick={() => setSelectedStock(stock)}>
-                <td style={{ color: index < 3 ? 'var(--text-yellow)' : 'inherit' }}>
-                  {index < 3 ? '★' : ''} #{index + 1}
+                <td style={{ color: index < 3 ? 'var(--yellow)' : 'inherit', fontWeight: index < 3 ? 600 : 'normal' }}>
+                  {index < 3 ? '★' : ''} {index + 1}
                 </td>
                 <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <StockLogo ticker={stock.ticker} />
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <span style={{ fontWeight: 'bold', color: 'var(--text-blue, #64a1ff)' }}>{stock.ticker}</span>
-                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{stock.empresa?.substring(0, 15)}</span>
-                    </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{stock.ticker}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{stock.empresa?.substring(0, 20)}</span>
                   </div>
                 </td>
                 <td>R$ {stock.cotacaoAtual?.toFixed(2) || 'N/A'}</td>
-                <td>{stock.divYield?.toFixed(1) || '0.0'}%</td>
-                <td>{stock.pl?.toFixed(2) || 'N/A'}</td>
-                <td>{stock.margemLiquida?.toFixed(1) || '0.0'}%</td>
-                <td>{stock.roe?.toFixed(1) || 'N/A'}%</td>
+                <td><StatusIndicator value={stock.divYield?.toFixed(1)} thresholds={{good: 6, bad: 3}}/>%</td>
+                <td><StatusIndicator value={stock.pl?.toFixed(2)} thresholds={{good: 5, bad: 15}} inverse={true}/></td>
+                <td><StatusIndicator value={stock.margemLiquida?.toFixed(1)} thresholds={{good: 15, bad: 5}}/>%</td>
+                <td><StatusIndicator value={stock.roe?.toFixed(1)} thresholds={{good: 15, bad: 5}}/>%</td>
                 <td>{stock.divBrutaPatrim?.toFixed(2) || 'N/A'}</td>
                 
-                <td style={{ backgroundColor: '#fceb8d20', color: '#fceb8d' }}>
+                <td>
                   R$ {stock.precoTetoBazin?.toFixed(2) || '0.00'}
                 </td>
-                <td style={{ backgroundColor: '#8bbcf620', color: '#8bbcf6' }}>
+                <td>
                   R$ {stock.precoJustoGraham?.toFixed(2) || '0.00'}
                 </td>
-                <td style={{ backgroundColor: '#f18a7020', color: '#f18a70', fontWeight: 'bold' }}>
-                  {stock.scoreComposto}
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className={`status-dot ${stock.scoreComposto > 70 ? 'status-green' : stock.scoreComposto > 40 ? 'status-yellow' : 'status-red'}`}></span>
+                    <span style={{ fontWeight: 600 }}>{stock.scoreComposto}</span>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -126,45 +149,46 @@ export default function Dashboard() {
   const renderPiotroski = () => (
     <>
       {piotroskiStocks.length > 0 && <Top10Chart stocks={piotroskiStocks} title="Top 10 — Graham + Piotroski" scoreField="fScore" scoreSuffix="F-Score" />}
+      
       <div className="table-container">
         <table className="valuation-table">
           <thead>
             <tr>
-              <th>Rank</th>
-              <th>Ticker</th>
+              <th>Posição</th>
+              <th>Ativo</th>
               <th>Cotação</th>
               <th>ROE</th>
               <th>Liq. Corr.</th>
-              <th>Dív. Bruta /<br/>Patrim.</th>
-              <th style={{ backgroundColor: '#8bbcf6', color: '#333' }}>Valuation<br/>Graham</th>
-              <th style={{ backgroundColor: '#4caf50', color: '#fff' }}>Piotroski<br/>F-Score</th>
+              <th>Alavancagem</th>
+              <th>Valuation Graham</th>
+              <th>Piotroski F-Score</th>
             </tr>
           </thead>
           <tbody>
             {piotroskiStocks.map((stock, index) => (
               <tr key={stock.ticker} onClick={() => setSelectedStock(stock)}>
-                <td style={{ color: index < 3 ? 'var(--text-yellow)' : 'inherit' }}>
-                  {index < 3 ? '★' : ''} #{index + 1}
+                <td style={{ color: index < 3 ? 'var(--yellow)' : 'inherit', fontWeight: index < 3 ? 600 : 'normal' }}>
+                  {index < 3 ? '★' : ''} {index + 1}
                 </td>
                 <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <StockLogo ticker={stock.ticker} />
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <span style={{ fontWeight: 'bold', color: 'var(--text-blue, #64a1ff)' }}>{stock.ticker}</span>
-                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{stock.empresa?.substring(0, 15)}</span>
-                    </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{stock.ticker}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{stock.empresa?.substring(0, 20)}</span>
                   </div>
                 </td>
                 <td>R$ {stock.cotacaoAtual?.toFixed(2) || 'N/A'}</td>
-                <td>{stock.roe?.toFixed(1) || 'N/A'}%</td>
-                <td>{stock.liqCorr?.toFixed(2) || 'N/A'}</td>
+                <td><StatusIndicator value={stock.roe?.toFixed(1)} thresholds={{good: 15, bad: 5}}/>%</td>
+                <td><StatusIndicator value={stock.liqCorr?.toFixed(2)} thresholds={{good: 1.5, bad: 1}}/></td>
                 <td>{stock.divBrutaPatrim?.toFixed(2) || 'N/A'}</td>
                 
-                <td style={{ backgroundColor: '#8bbcf620', color: '#8bbcf6' }}>
+                <td>
                   R$ {stock.precoJustoGraham?.toFixed(2) || '0.00'}
                 </td>
-                <td style={{ backgroundColor: '#4caf5020', color: '#4caf50', fontWeight: 'bold' }}>
-                  {stock.fScore} / 9
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className={`status-dot ${stock.fScore >= 7 ? 'status-green' : stock.fScore >= 4 ? 'status-yellow' : 'status-red'}`}></span>
+                    <span style={{ fontWeight: 600 }}>{stock.fScore} / 9</span>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -175,54 +199,62 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="app-container">
-      <header className="header">
-        <h1>Aegis</h1>
-      </header>
-
-      {error && (
-        <div style={{ background: '#ff444420', color: '#ff4444', padding: '12px', margin: '16px', borderRadius: '4px' }}>
-          {error}
+    <div className="app-wrapper">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-logo">
+          <IconLogo />
+          <span>Aegis Platform</span>
         </div>
-      )}
-
-      {isSyncing && stocks.length > 0 && <SyncProgressBar />}
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 16px 16px', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px' }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button 
-            className={`btn ${activeTab === 'graham_bazin' ? 'btn-primary' : 'btn-outline'}`}
+        <div className="sidebar-menu">
+          <div style={{ margin: '8px 0', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-muted)', paddingLeft: '12px' }}>Analytics</div>
+          <div 
+            className={`sidebar-item ${activeTab === 'graham_bazin' ? 'active' : ''}`}
             onClick={() => setActiveTab('graham_bazin')}
           >
-            Ranking Compostos
-          </button>
-          <button 
-            className={`btn ${activeTab === 'piotroski' ? 'btn-primary' : 'btn-outline'}`}
+            <IconSpeed />
+            <span>Ranking Compostos</span>
+          </div>
+          <div 
+            className={`sidebar-item ${activeTab === 'piotroski' ? 'active' : ''}`}
             onClick={() => setActiveTab('piotroski')}
           >
-            Graham + Piotroski
-          </button>
-        </div>
-
-        {activeTab === 'graham_bazin' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Perfil:</span>
-            <select 
-              value={activeProfile} 
-              onChange={(e) => setProfile(e.target.value)}
-              style={{ padding: '6px 12px', borderRadius: '4px', background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }}
-            >
-              {Object.entries(PERFIS_SCORE).map(([key, perfil]) => (
-                <option key={key} value={key}>{perfil.label}</option>
-              ))}
-            </select>
+            <IconValuation />
+            <span>Graham + Piotroski</span>
           </div>
-        )}
-      </div>
+          <div style={{ margin: '16px 0 8px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-muted)', paddingLeft: '12px' }}>Sistema</div>
+          <div className="sidebar-item">
+            <IconSettings />
+            <span>Configurações</span>
+          </div>
+        </div>
+      </aside>
 
-      {activeTab === 'graham_bazin' && renderGrahamBazin()}
-      {activeTab === 'piotroski' && renderPiotroski()}
+      {/* Main Content */}
+      <main className="main-content">
+        <header className="header">
+          {activeTab === 'graham_bazin' ? 'Aegis / Speed Insights / Ranking Compostos' : 'Aegis / Speed Insights / Graham + Piotroski'}
+        </header>
 
+        <div className="content-inner">
+          {error && (
+            <div style={{ background: 'var(--bg-app)', border: '1px solid var(--red)', color: 'var(--red)', padding: '16px', marginBottom: '24px', borderRadius: '8px', fontSize: '14px' }}>
+              {error}
+            </div>
+          )}
+
+          {isSyncing && stocks.length > 0 && (
+            <div style={{ marginBottom: '24px' }}>
+              <SyncProgressBar />
+            </div>
+          )}
+
+          {activeTab === 'graham_bazin' && renderGrahamBazin()}
+          {activeTab === 'piotroski' && renderPiotroski()}
+        </div>
+      </main>
+
+      {/* Modal Detalhes */}
       {selectedStock && (
         <StockDetail 
           stock={selectedStock} 

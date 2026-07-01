@@ -1,42 +1,31 @@
 /* src/index.css */
-/* Tema Minimalista e Corporativo */
+/* Tema Vercel-like */
 
 @import "tailwindcss";
 
 :root {
-  /* Minimalist Palette */
-  --bg-base: #f9fafb;
-  --bg-surface: #ffffff;
-  --border-light: #e5e7eb;
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --text-muted: #9ca3af;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
+  /* Minimalist Palette Vercel Style */
+  --bg-app: #FAFAFA;
+  --bg-surface: #FFFFFF;
+  --border-light: #EAEAEA;
+  --border-strong: #888888;
+  
+  --text-primary: #111111;
+  --text-secondary: #666666;
+  --text-muted: #888888;
+  --text-inverse: #FFFFFF;
 
-  --green: #16a34a;
-  --red: #dc2626;
-  --yellow: #d97706;
+  --primary: #000000;
+  --primary-hover: #333333;
+  --secondary-bg: #F5F5F5;
+
+  /* Status Colors from Vercel */
+  --green: #16A34A; /* or #50E3C2 */
+  --red: #E00000; /* or #EF4444 */
+  --yellow: #F5A623;
+  --blue: #0070F3;
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-}
-
-/* Dark mode estrito para quem preferir, mas mais clean */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-base: #111827;
-    --bg-surface: #1f2937;
-    --border-light: #374151;
-    --text-primary: #f9fafb;
-    --text-secondary: #d1d5db;
-    --text-muted: #6b7280;
-    --primary: #3b82f6;
-    --primary-hover: #60a5fa;
-
-    --green: #22c55e;
-    --red: #ef4444;
-    --yellow: #f59e0b;
-  }
 }
 
 *, *::before, *::after {
@@ -47,34 +36,99 @@
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--bg-base);
+  background-color: var(--bg-app);
   color: var(--text-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Base Layout */
-.app-container {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 32px 24px;
+/* Layout */
+.app-wrapper {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: var(--bg-app);
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  flex-shrink: 0;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 32px;
+  padding-left: 8px;
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.sidebar-item:hover {
+  background-color: var(--secondary-bg);
+  color: var(--text-primary);
+}
+
+.sidebar-item.active {
+  background-color: var(--secondary-bg);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+  overflow-y: auto;
+  border-left: 1px solid var(--border-light);
 }
 
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 16px;
+  height: 64px;
   border-bottom: 1px solid var(--border-light);
-  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  font-weight: 500;
+  font-size: 14px;
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-surface);
+  z-index: 10;
 }
 
-.header h1 {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--primary);
+.content-inner {
+  padding: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
 }
 
+/* Base UI Elements */
 .btn {
   padding: 8px 16px;
   border-radius: 6px;
@@ -83,11 +137,14 @@ body {
   cursor: pointer;
   border: 1px solid transparent;
   transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .btn-primary {
   background-color: var(--primary);
-  color: #fff;
+  color: var(--text-inverse);
 }
 .btn-primary:hover {
   background-color: var(--primary-hover);
@@ -99,106 +156,116 @@ body {
   color: var(--text-primary);
 }
 .btn-outline:hover {
-  background-color: var(--border-light);
+  border-color: var(--border-strong);
 }
 
-/* Tabela de Ações - Polished Minimalist */
-.table-container {
-  overflow-x: auto;
+.card {
   background: var(--bg-surface);
-  border-radius: 12px;
   border: 1px solid var(--border-light);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
 }
 
-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  text-align: left;
-}
-
-th {
-  padding: 16px;
-  font-size: 11px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  background: var(--bg-base);
-  border-bottom: 2px solid var(--border-light);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-td {
-  padding: 16px;
-  border-bottom: 1px solid var(--border-light);
-  font-size: 14px;
-}
-
-tr:last-child td {
-  border-bottom: none;
-}
-
-tbody tr {
-  transition: all 0.2s ease;
-  cursor: pointer;
+/* Vercel Style Metrics */
+.metric-card {
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 20px;
   background: var(--bg-surface);
 }
 
-tbody tr:nth-child(even) {
-  background: rgba(0, 0, 0, 0.015);
+.metric-title {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
 }
 
-tbody tr:hover {
-  background-color: rgba(37, 99, 235, 0.04);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-@media (prefers-color-scheme: dark) {
-  tbody tr:nth-child(even) {
-    background: rgba(255, 255, 255, 0.02);
-  }
-  tbody tr:hover {
-    background-color: rgba(59, 130, 246, 0.1);
-  }
-  th { background: rgba(0,0,0,0.2); }
-}
-
-.ticker-name {
+.metric-value {
+  font-size: 24px;
   font-weight: 600;
-  color: var(--primary);
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
 }
 
-/* Cores de Score/Valores */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+}
+.status-green { background-color: var(--green); }
+.status-red { background-color: var(--red); }
+.status-yellow { background-color: var(--yellow); }
+
 .text-green { color: var(--green); }
 .text-red { color: var(--red); }
 .text-yellow { color: var(--yellow); }
 
-/* Modal / Detalhes */
+/* Tables */
+.table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--bg-surface);
+}
+
+.valuation-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.valuation-table th, 
+.valuation-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.valuation-table th {
+  font-weight: 500;
+  color: var(--text-secondary);
+  background-color: var(--bg-surface);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  font-size: 13px;
+}
+
+.valuation-table tr:hover td {
+  background-color: var(--bg-app);
+  cursor: pointer;
+}
+
+.valuation-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background-color: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 100;
   padding: 24px;
 }
 
 .modal-content {
   background: var(--bg-surface);
+  padding: 32px;
   border-radius: 12px;
   width: 100%;
-  max-width: 800px;
+  max-width: 900px;
   max-height: 90vh;
   overflow-y: auto;
-  padding: 24px;
-  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
 }
 
 .modal-header {
@@ -206,100 +273,95 @@ tbody tr:hover {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  border-bottom: 1px solid var(--border-light);
   padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .modal-title {
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .close-btn {
   background: transparent;
   border: none;
   font-size: 24px;
-  cursor: pointer;
   color: var(--text-muted);
+  cursor: pointer;
 }
+
 .close-btn:hover {
   color: var(--text-primary);
 }
 
-/* Gráficos */
 .chart-container {
   height: 300px;
-  margin: 24px 0;
-}
-
-/* Top 10 */
-.top-10-section {
-  margin-bottom: 32px;
-  background: var(--bg-surface);
+  margin-top: 16px;
   border: 1px solid var(--border-light);
   border-radius: 8px;
-  padding: 20px;
+  padding: 16px;
 }
 
-.top-10-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: var(--text-secondary);
+/* Utilities */
+.loading-spinner-large {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-light);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
 }
 
-.progress-bar-container {
-  margin: 16px 0;
-  padding: 12px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-light);
-  border-radius: 6px;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-/* Empty State / Loading */
 .center-content {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 64px 20px;
-  text-align: center;
+  height: 100%;
   color: var(--text-secondary);
 }
 
-/* Barra de Sincronização */
-.sync-bar-wrapper {
-  margin: 16px 0;
-  padding: 16px;
-  background: var(--bg-surface);
+select.vercel-select {
+  padding: 6px 32px 6px 12px;
   border: 1px solid var(--border-light);
-  border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-.sync-bar-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-weight: 600;
+  border-radius: 6px;
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
   font-size: 14px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+select.vercel-select:focus {
+  outline: none;
+  border-color: var(--border-strong);
 }
 
-.sync-bar-track {
-  height: 8px;
-  background: var(--border-light);
+/* Tabs like Vercel Desktop/Mobile */
+.vercel-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--secondary-bg);
+  padding: 4px;
+  border-radius: 6px;
+  width: fit-content;
+}
+.vercel-tab {
+  padding: 6px 16px;
   border-radius: 4px;
-  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-secondary);
 }
-
-.sync-bar-fill {
-  height: 100%;
-  background: var(--primary);
-  transition: width 0.3s ease;
-}
-
-.sync-bar-detail {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--text-muted);
+.vercel-tab.active {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
