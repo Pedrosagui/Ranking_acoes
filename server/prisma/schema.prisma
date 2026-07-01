@@ -10,6 +10,7 @@ model Stock {
   ticker            String    @id
   empresa           String
   setor             String
+  logoUrl           String?
   
   // Indicadores Básicos
   cotacaoAtual      Float?

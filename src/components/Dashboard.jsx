@@ -75,14 +75,23 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('graham_bazin');
   const [selectedStock, setSelectedStock] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, activeProfile, filteredStocks.length]);
+  }, [activeTab, activeProfile, filteredStocks.length, searchQuery]);
 
   if (isLoading || (isSyncing && stocks.length === 0)) return <LoadingState />;
 
-  const piotroskiStocks = rankPiotroskiGraham(stocks);
+  const searchedStocks = filteredStocks.filter(s => 
+    s.ticker.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (s.empresa && s.empresa.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const piotroskiStocks = rankPiotroskiGraham(stocks).filter(s => 
+    s.ticker.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (s.empresa && s.empresa.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   const renderPagination = (totalItems) => {
     const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
@@ -133,8 +142,15 @@ export default function Dashboard() {
         <div className="mobile-card-indicator" style={{ backgroundColor: dotColor }}></div>
         <div className="mobile-card-content">
           <div className="mobile-card-header">
-            <span className="mobile-card-title">
+            <span className="mobile-card-title" style={{ display: 'flex', alignItems: 'center' }}>
               <span style={{ color: index < 3 ? 'var(--yellow)' : 'inherit', marginRight: '6px' }}>{index < 3 ? '★' : ''} #{index + 1}</span> 
+              
+              {stock.logoUrl ? (
+                <img src={stock.logoUrl} alt={stock.ticker} style={{width: 20, height: 20, borderRadius: '50%', marginRight: '8px', objectFit: 'contain', background: 'white'}} />
+              ) : (
+                <div style={{width: 20, height: 20, borderRadius: '50%', background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '8px', fontSize: '10px', fontWeight: 'bold', color: 'var(--text-secondary)'}}>{stock.ticker.charAt(0)}</div>
+              )}
+
               {stock.ticker}
             </span>
             <span className="mobile-card-price">R$ {stock.cotacaoAtual?.toFixed(2) || '0.00'}</span>
@@ -179,11 +195,21 @@ export default function Dashboard() {
   };
 
   const renderGrahamBazin = () => {
-    const currentData = filteredStocks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+    const currentData = searchedStocks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     return (
       <>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '24px' }}>
+        <div className="dashboard-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+          <div className="search-container" style={{ flex: '1', minWidth: '250px' }}>
+            <input 
+              type="search" 
+              className="search-input" 
+              placeholder="Buscar por Ticker ou Empresa..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ width: '100%', padding: '10px 16px', borderRadius: '8px', border: '1px solid var(--border-light)', background: 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none' }}
+            />
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Perfil:</span>
             <select 
@@ -198,7 +224,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {currentPage === 1 && filteredStocks.length > 0 && <Top10Chart stocks={filteredStocks} title={`Top 10 — Ranking ${PERFIS_SCORE[activeProfile]?.label || 'Valuation'}`} scoreField="scoreComposto" scoreSuffix="pts" />}
+        {currentPage === 1 && searchQuery === '' && filteredStocks.length > 0 && <Top10Chart stocks={filteredStocks} title={`Top 10 — Ranking ${PERFIS_SCORE[activeProfile]?.label || 'Valuation'}`} scoreField="scoreComposto" scoreSuffix="pts" />}
         
         {/* Desktop Table */}
         <div className="table-container desktop-only">
@@ -227,9 +253,16 @@ export default function Dashboard() {
                       {index < 3 ? '★' : ''} {index + 1}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{stock.ticker}</span>
-                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{stock.empresa?.substring(0, 20)}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {stock.logoUrl ? (
+                          <img src={stock.logoUrl} alt={stock.ticker} style={{width: 28, height: 28, borderRadius: '50%', objectFit: 'contain', background: 'white'}} />
+                        ) : (
+                          <div style={{width: 28, height: 28, borderRadius: '50%', background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)'}}>{stock.ticker.charAt(0)}</div>
+                        )}
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{stock.ticker}</span>
+                          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{stock.empresa?.substring(0, 25)}</span>
+                        </div>
                       </div>
                     </td>
                     <td>R$ {stock.cotacaoAtual?.toFixed(2) || 'N/A'}</td>
@@ -275,7 +308,20 @@ export default function Dashboard() {
 
     return (
       <>
-        {currentPage === 1 && piotroskiStocks.length > 0 && <Top10Chart stocks={piotroskiStocks} title="Top 10 — Graham + Piotroski" scoreField="fScore" scoreSuffix="F-Score" />}
+        <div className="dashboard-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+          <div className="search-container" style={{ flex: '1', minWidth: '250px' }}>
+            <input 
+              type="search" 
+              className="search-input" 
+              placeholder="Buscar por Ticker ou Empresa..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ width: '100%', padding: '10px 16px', borderRadius: '8px', border: '1px solid var(--border-light)', background: 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none' }}
+            />
+          </div>
+        </div>
+      
+        {currentPage === 1 && searchQuery === '' && piotroskiStocks.length > 0 && <Top10Chart stocks={piotroskiStocks} title="Top 10 — Graham + Piotroski" scoreField="fScore" scoreSuffix="F-Score" />}
         
         {/* Desktop Table */}
         <div className="table-container desktop-only">
@@ -301,9 +347,16 @@ export default function Dashboard() {
                       {index < 3 ? '★' : ''} {index + 1}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{stock.ticker}</span>
-                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{stock.empresa?.substring(0, 20)}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {stock.logoUrl ? (
+                          <img src={stock.logoUrl} alt={stock.ticker} style={{width: 28, height: 28, borderRadius: '50%', objectFit: 'contain', background: 'white'}} />
+                        ) : (
+                          <div style={{width: 28, height: 28, borderRadius: '50%', background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)'}}>{stock.ticker.charAt(0)}</div>
+                        )}
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{stock.ticker}</span>
+                          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{stock.empresa?.substring(0, 25)}</span>
+                        </div>
                       </div>
                     </td>
                     <td>R$ {stock.cotacaoAtual?.toFixed(2) || 'N/A'}</td>

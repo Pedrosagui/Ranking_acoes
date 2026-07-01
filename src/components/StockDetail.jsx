@@ -68,9 +68,19 @@ export default function StockDetail({ stock, onClose }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-title">{stock.ticker} - {stock.empresa}</h2>
-          <button className="close-btn" onClick={onClose}>&times;</button>
+        <div className="modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {stock.logoUrl ? (
+              <img src={stock.logoUrl} alt={stock.ticker} style={{width: 40, height: 40, borderRadius: '50%', objectFit: 'contain', background: 'white'}} />
+            ) : (
+              <div style={{width: 40, height: 40, borderRadius: '50%', background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 'bold', color: 'var(--text-secondary)'}}>{stock.ticker.charAt(0)}</div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <h2 className="modal-title" style={{ margin: 0, fontSize: '20px' }}>{stock.ticker}</h2>
+              <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>{stock.empresa}</span>
+            </div>
+          </div>
+          <button className="close-btn" onClick={onClose} style={{ alignSelf: 'flex-start' }}>&times;</button>
         </div>
 
         <div className="stock-detail-top" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', marginBottom: '24px' }}>
