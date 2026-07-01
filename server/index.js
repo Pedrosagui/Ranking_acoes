@@ -26,7 +26,7 @@ app.get('/api/stocks', async (req, res) => {
     res.json(stocks);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Erro ao buscar ações' });
+    res.status(500).json({ error: 'Erro ao buscar ações', details: error.message, stack: error.stack });
   }
 });
 
