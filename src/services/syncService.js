@@ -31,7 +31,7 @@ export async function syncAllStocks() {
     dbStocks.forEach(s => {
       const prefix = s.ticker.substring(0, 4);
       const key = prefix === 'AZTE' ? 'AZEV' : prefix;
-      if (!s.logoUrl && logoMap[key]) {
+      if (logoMap[key]) {
         s.logoUrl = logoMap[key];
       }
     });
