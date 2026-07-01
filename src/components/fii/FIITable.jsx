@@ -143,26 +143,9 @@ export default function FIITable() {
                 <td className="text-green">{(fii.divYield || 0).toFixed(1)}%</td>
                 <td>{Math.round(fii.volumeDiario / 1000)}k</td>
                 <td>
-                  <div className="score-badge" style={{
-                    background: `conic-gradient(var(--yellow) ${fii.scoreComposto * 3.6}deg, var(--bg-app) 0deg)`,
-                    border: 'none',
-                    padding: '4px',
-                    minWidth: '48px',
-                    minHeight: '48px',
-                    flexShrink: 0
-                  }}>
-                    <div style={{ 
-                      background: 'var(--bg-surface)', 
-                      width: '100%', 
-                      height: '100%', 
-                      borderRadius: '50%', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
-                    }}>
-                      <span className="score-value">{fii.scoreComposto}</span>
-                    </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className={`status-dot ${fii.scoreComposto > 70 ? 'status-green' : fii.scoreComposto > 40 ? 'status-yellow' : 'status-red'}`}></span>
+                    <span style={{ fontWeight: 600 }}>{fii.scoreComposto}</span>
                   </div>
                 </td>
               </tr>
