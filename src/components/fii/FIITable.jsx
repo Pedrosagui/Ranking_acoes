@@ -51,7 +51,8 @@ export default function FIITable() {
                 <td>{fii.segmento}</td>
                 <td>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span>P/VP: {fii.pvp?.toFixed(2)}</span>
+                    <span style={{ fontWeight: 600 }}>R$ {fii.cotacaoAtual?.toFixed(2) || '---'}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>P/VP: {fii.pvp?.toFixed(2) || '---'}</span>
                   </div>
                 </td>
                 <td className="text-green">{(fii.divYield || 0).toFixed(1)}%</td>

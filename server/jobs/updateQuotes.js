@@ -18,7 +18,10 @@ async function fetchBrapiBatch(tickers, token) {
   if (data.results) {
     data.results.forEach(item => {
       if (item.regularMarketPrice) {
-        prices[item.symbol] = item.regularMarketPrice;
+        prices[item.symbol] = {
+          price: item.regularMarketPrice,
+          changePercent: item.regularMarketChangePercent || 0
+        };
       }
     });
   }
@@ -32,7 +35,14 @@ async function fetchYahooFallback(ticker) {
     const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
     if (!res.ok) return null;
     const data = await res.json();
-    return data.chart?.result?.[0]?.meta?.regularMarketPrice;
+    const meta = data.chart?.result?.[0]?.meta;
+    if (meta && meta.regularMarketPrice) {
+      const prevClose = meta.chartPreviousClose || meta.regularMarketPrice;
+      const change = meta.regularMarketPrice - prevClose;
+      const changePercent = prevClose ? (change / prevClose) * 100 : 0;
+      return { price: meta.regularMarketPrice, changePercent };
+    }
+    return null;
   } catch (e) {
     return null;
   }
@@ -65,7 +75,7 @@ export async function updateQuotes(prisma) {
       const promises = chunk.map(async (item) => {
         const { ticker, model } = item;
         const batch = [ticker];
-        let price = null;
+        let priceObj = null;
         
         if (!usingYahooFallback) {
           let success = false;
@@ -74,7 +84,7 @@ export async function updateQuotes(prisma) {
             try {
               const token = BRAPI_TOKENS[localTokenIdx];
               const batchPrices = await fetchBrapiBatch(batch, token);
-              price = batchPrices[ticker];
+              priceObj = batchPrices[ticker];
               success = true;
             } catch (err) {
               console.warn(`[Brapi] Falha para ${ticker} com token ${localTokenIdx}: ${err.message}.`);
@@ -86,14 +96,17 @@ export async function updateQuotes(prisma) {
           }
         }
         
-        if (!price && usingYahooFallback) {
-           price = await fetchYahooFallback(ticker);
+        if (!priceObj && usingYahooFallback) {
+           priceObj = await fetchYahooFallback(ticker);
         }
         
-        if (price) {
+        if (priceObj) {
           await prisma[model].update({
             where: { ticker },
-            data: { cotacaoAtual: price }
+            data: { 
+              cotacaoAtual: priceObj.price,
+              retornoDiario: priceObj.changePercent
+            }
           });
         }
       });

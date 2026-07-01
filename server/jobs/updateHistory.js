@@ -9,7 +9,9 @@ export async function updateHistory(prisma) {
     const allItems = [
       ...stocks.map(s => ({ ticker: s.ticker, model: 'stock' })),
       ...fiis.map(s => ({ ticker: s.ticker, model: 'fii' })),
-      ...etfs.map(s => ({ ticker: s.ticker, model: 'etf' }))
+      ...etfs.map(s => ({ ticker: s.ticker, model: 'etf' })),
+      { ticker: '^BVSP', model: 'index' },
+      { ticker: 'IFIX.SA', model: 'index' }
     ];
     
     let historicoInserido = 0;
@@ -21,7 +23,7 @@ export async function updateHistory(prisma) {
       
       const promises = chunk.map(async (item) => {
         const { ticker, model } = item;
-        const symbol = `${ticker}.SA`;
+        const symbol = (ticker === '^BVSP' || ticker === 'IFIX.SA') ? ticker : `${ticker}.SA`;
         const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=5y&interval=1mo`;
         
         try {

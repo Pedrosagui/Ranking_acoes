@@ -59,17 +59,20 @@ function calcInvestmentSimulation(stockHistory, ibovHistory) {
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
+    const dateStr = new Date(label).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
     return (
-      <div style={{ background: '#242526', border: '1px solid #3A3B3C', padding: '12px', borderRadius: '8px', color: '#E4E6EB', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
-        <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>{label}</p>
-        {payload.map((entry, index) => (
-          <p key={index} style={{ margin: '4px 0', color: entry.color, display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-            <span>{entry.name}:</span>
-            <span style={{ fontWeight: 'bold' }}>
-              R$ {entry.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          </p>
-        ))}
+      <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-light)', borderRadius: '8px', padding: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+        <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', color: 'var(--text-primary)' }}>{dateStr}</p>
+        {payload.map(p => {
+          const itemColor = p.color && p.color.startsWith('url') ? '#8A2BE2' : p.color;
+          return (
+            <div key={p.dataKey} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: itemColor }}></div>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{p.name}:</span>
+              <span style={{ fontWeight: 600, color: itemColor }}>R$ {p.value.toFixed(2)}</span>
+            </div>
+          );
+        })}
       </div>
     );
   }

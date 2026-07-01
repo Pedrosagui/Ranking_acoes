@@ -14,6 +14,8 @@ model Stock {
 
   // Indicadores Básicos
   cotacaoAtual Float?
+  retornoDiario Float?
+  retorno12m   Float?
   lpa          Float?
   vpa          Float?
 
@@ -81,8 +83,9 @@ model Fii {
   gestora     String
   numCotistas Int?
 
-  // Dados din�micos da API
+  // Dados dinâmicos da API
   cotacaoAtual         Float?
+  retornoDiario        Float?
   divYield             Float?
   pvp                  Float?
   liquidezMedia        Float?
@@ -100,8 +103,9 @@ model Etf {
   gestora   String
   numAtivos Int?
 
-  // Dados din�micos da API
+  // Dados dinâmicos da API
   cotacaoAtual     Float?
+  retornoDiario    Float?
   rentabilidade12m Float?
 
   updatedAt DateTime @updatedAt

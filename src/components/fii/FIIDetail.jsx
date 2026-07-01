@@ -1,13 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useHistory } from '../../hooks/useHistory';
 import { ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
-function calcInvestmentSimulation(stockHistory, ibovHistory) {
+function calcInvestmentSimulation(stockHistory, ibovHistory, divYield = 0, reinvest = true) {
   if (!stockHistory || stockHistory.length < 2) return { data: [], finalStock: 0, finalIbov: 0, finalCdi: 0 };
   
   // Pegamos os ultimos 25 pontos (24 meses de retorno)
   const recentStock = stockHistory.slice(-25);
   const cdiMonthlyReturn = 0.0085; // ~0.85%
+  const monthlyYield = reinvest ? (divYield / 100) / 12 : 0;
   
   const simulationData = [];
   let currentStock = 100;
@@ -26,10 +27,10 @@ function calcInvestmentSimulation(stockHistory, ibovHistory) {
   for (let i = 1; i < recentStock.length; i++) {
     const s1 = recentStock[i-1];
     const s2 = recentStock[i];
-    const stockReturn = (s2.price - s1.price) / s1.price;
+    const stockReturn = ((s2.price - s1.price) / s1.price) + monthlyYield;
     currentStock = currentStock * (1 + stockReturn);
     
-    // IBOV
+    // IFIX
     const i2 = ibovHistory.find(b => b.date.substring(0, 7) === s2.date.substring(0, 7));
     const i1 = ibovHistory.find(b => b.date.substring(0, 7) === s1.date.substring(0, 7));
     
@@ -59,17 +60,20 @@ function calcInvestmentSimulation(stockHistory, ibovHistory) {
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
+    const dateStr = new Date(label).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
     return (
-      <div style={{ background: '#242526', border: '1px solid #3A3B3C', padding: '12px', borderRadius: '8px', color: '#E4E6EB', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
-        <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>{label}</p>
-        {payload.map((entry, index) => (
-          <p key={index} style={{ margin: '4px 0', color: entry.color, display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-            <span>{entry.name}:</span>
-            <span style={{ fontWeight: 'bold' }}>
-              R$ {entry.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          </p>
-        ))}
+      <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-light)', borderRadius: '8px', padding: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+        <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', color: 'var(--text-primary)' }}>{dateStr}</p>
+        {payload.map(p => {
+          const itemColor = p.color && p.color.startsWith('url') ? '#8A2BE2' : p.color;
+          return (
+            <div key={p.dataKey} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: itemColor }}></div>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{p.name}:</span>
+              <span style={{ fontWeight: 600, color: itemColor }}>R$ {p.value.toFixed(2)}</span>
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -78,9 +82,10 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function FIIDetail({ fii, onClose }) {
   const { history } = useHistory(fii.ticker);
-  const { history: ibovHistory } = useHistory('^BVSP');
+  const { history: ibovHistory } = useHistory('IFIX.SA');
+  const [reinvest, setReinvest] = useState(true);
   
-  const simulation = useMemo(() => calcInvestmentSimulation(history, ibovHistory), [history, ibovHistory]);
+  const simulation = useMemo(() => calcInvestmentSimulation(history, ibovHistory, fii.divYield || 0, reinvest), [history, ibovHistory, fii.divYield, reinvest]);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -124,9 +129,13 @@ export default function FIIDetail({ fii, onClose }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: 600, margin: '0 0 8px 0' }}>Retorno Histórico (2 Anos)</h3>
-                <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)' }}>
+                <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
                   Se você tivesse investido <strong>R$ 100,00</strong> há 2 anos, hoje você teria:
                 </p>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer', userSelect: 'none', color: 'var(--text-primary)' }}>
+                  <input type="checkbox" checked={reinvest} onChange={e => setReinvest(e.target.checked)} style={{ cursor: 'pointer', width: '16px', height: '16px', accentColor: '#8A2BE2' }} />
+                  Reinvestir Dividendos
+                </label>
               </div>
               
               <div style={{ display: 'flex', gap: '16px' }}>
@@ -135,7 +144,7 @@ export default function FIIDetail({ fii, onClose }) {
                   <span style={{ fontSize: '18px', fontWeight: 700, color: '#8A2BE2' }}>R$ {simulation.finalStock.toFixed(2)}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>IBOV</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>IFIX</span>
                   <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--green)' }}>R$ {simulation.finalIbov.toFixed(2)}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
@@ -177,7 +186,7 @@ export default function FIIDetail({ fii, onClose }) {
                   <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
                   
                   <Line type="monotone" dataKey="cdiValue" name="100% CDI" stroke="var(--text-primary)" strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
-                  <Line type="monotone" dataKey="ibovValue" name="IBOVESPA" stroke="var(--green)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="ibovValue" name="IFIX" stroke="var(--green)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
                   <Area type="monotone" dataKey="stockValue" name={fii.ticker} stroke="url(#strokeGradientFII)" strokeWidth={3} fillOpacity={1} fill="url(#colorFII)" activeDot={{ r: 6, strokeWidth: 0, fill: '#8A2BE2' }} />
                 </ComposedChart>
               </ResponsiveContainer>

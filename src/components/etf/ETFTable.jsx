@@ -25,9 +25,10 @@ export default function ETFTable() {
               <th>Posição</th>
               <th>ETF</th>
               <th>Benchmark</th>
-              <th>Taxa Adm.</th>
+              <th>Cotação Atual</th>
+              <th>Retorno Diário</th>
               <th>Retorno (12M)</th>
-              <th>Liquidez</th>
+              <th>Taxa Adm.</th>
               <th>Score (100)</th>
             </tr>
           </thead>
@@ -49,11 +50,14 @@ export default function ETFTable() {
                   </div>
                 </td>
                 <td>{etf.benchmark}</td>
-                <td>{etf.taxaAdm?.toFixed(2)}%</td>
-                <td className={etf.retorno12m >= 0 ? 'text-green' : 'text-red'}>
-                  {etf.retorno12m >= 0 ? '+' : ''}{(etf.retorno12m || 0).toFixed(1)}%
+                <td style={{ fontWeight: 600 }}>R$ {etf.cotacaoAtual?.toFixed(2) || '---'}</td>
+                <td className={(etf.retornoDiario || 0) >= 0 ? 'text-green' : 'text-red'}>
+                  {(etf.retornoDiario || 0) >= 0 ? '+' : ''}{(etf.retornoDiario || 0).toFixed(2)}%
                 </td>
-                <td>{Math.round(etf.volumeDiario / 1000000)}M</td>
+                <td className={(etf.retorno12m || 0) >= 0 ? 'text-green' : 'text-red'}>
+                  {(etf.retorno12m || 0) >= 0 ? '+' : ''}{(etf.retorno12m || 0).toFixed(1)}%
+                </td>
+                <td style={{ color: 'var(--text-muted)' }}>{etf.taxaAdm?.toFixed(2)}%</td>
                 <td>
                   <div className="score-badge">
                     <span className="score-value">{etf.scoreComposto}</span>

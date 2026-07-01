@@ -198,6 +198,8 @@ export default function Dashboard() {
                 <th>Posição</th>
                 <th>Ativo</th>
                 <th>Cotação</th>
+                <th>Retorno Diário</th>
+                <th>Retorno (12M)</th>
                 <th><Tooltip text="Relação percentual entre os dividendos pagos nos últimos 12 meses e o preço atual da ação.">Div. Yield</Tooltip></th>
                 <th><Tooltip text="Preço / Lucro. Quantos anos levaria para reaver o capital investido considerando o lucro atual.">P/L</Tooltip></th>
                 <th><Tooltip text="Porcentagem de lucro líquido em relação à receita total da empresa.">M. Líquida</Tooltip></th>
@@ -230,6 +232,12 @@ export default function Dashboard() {
                       </div>
                     </td>
                     <td>R$ {stock.cotacaoAtual?.toFixed(2) || 'N/A'}</td>
+                    <td className={(stock.retornoDiario || 0) >= 0 ? 'text-green' : 'text-red'}>
+                      {(stock.retornoDiario || 0) >= 0 ? '+' : ''}{(stock.retornoDiario || 0).toFixed(2)}%
+                    </td>
+                    <td className={(stock.retorno12m || 0) >= 0 ? 'text-green' : 'text-red'}>
+                      {(stock.retorno12m || 0) >= 0 ? '+' : ''}{(stock.retorno12m || 0).toFixed(1)}%
+                    </td>
                     <td><StatusIndicator value={stock.divYield?.toFixed(1)} thresholds={{good: 6, bad: 3}}/>%</td>
                     <td><StatusIndicator value={stock.pl?.toFixed(2)} thresholds={{good: 5, bad: 15}} inverse={true}/></td>
                     <td><StatusIndicator value={stock.margemLiquida?.toFixed(1)} thresholds={{good: 15, bad: 5}}/>%</td>
