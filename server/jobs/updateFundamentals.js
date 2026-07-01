@@ -73,7 +73,7 @@ function fetchFundamentusFIIs() {
   });
 }
 
-// Busca P/L do Yahoo Finance em lote
+// Busca P/L do Yahoo Finance para corrigir anomalias
 async function fetchYahooPLBatch(tickers) {
   if (tickers.length === 0) return {};
   
@@ -82,14 +82,12 @@ async function fetchYahooPLBatch(tickers) {
   for (const ticker of tickers) {
     try {
       const symbol = `${ticker}.SA`;
-      const quote = await yahooFinance.quoteSummary(symbol, { modules: ['defaultKeyStatistics', 'summaryDetail'] });
-      
-      const pe = quote.summaryDetail?.trailingPE || quote.defaultKeyStatistics?.trailingPE;
-      if (pe !== undefined && pe !== null) {
-        plMap[ticker] = pe;
+      const results = await yahooFinance.quote(symbol);
+      if (results && results.trailingPE) {
+        plMap[ticker] = results.trailingPE;
       }
     } catch (err) {
-      console.warn(`[Yahoo Validação] Falha para ${ticker}: ${err.message}`);
+      // silently skip
     }
   }
   
@@ -114,7 +112,6 @@ export async function updateFundamentals(prisma) {
     
     const parsedStocks = [];
     
-    // Passo 1: Extrair e organizar
     for (const row of rows) {
       if (!row.includes('<td')) continue;
       
@@ -130,8 +127,9 @@ export async function updateFundamentals(prisma) {
       if (!/^[A-Z]{4}(3|4|5|6|11)$/.test(ticker)) continue;
       if (ticker.startsWith('BDR')) continue;
       
-      const liquidez = parsePtBrNumber(tds[18]);
-      if (liquidez < 100000) continue;
+      // tds[18] = Liq.2meses no Fundamentus
+      const liq2Meses = parsePtBrNumber(tds[18]);
+      if (liq2Meses < 100000) continue;
       
       const cotacao = parsePtBrNumber(tds[1]);
       
@@ -145,14 +143,14 @@ export async function updateFundamentals(prisma) {
         margemLiquida: parsePtBrNumber(tds[11]),
         roic: parsePtBrNumber(tds[15]),
         roe: parsePtBrNumber(tds[16]),
-        liquidezMedia: liquidez,
-        dividaBrutaPatrim: parsePtBrNumber(tds[17]),
-        crescReceita5a: clampExtreme(parsePtBrNumber(tds[20])),
+        liq2Meses: liq2Meses,
+        divBrutaPatrim: parsePtBrNumber(tds[17]),
+        crescRec5a: clampExtreme(parsePtBrNumber(tds[20])),
         evEbit: parsePtBrNumber(tds[7])
       });
     }
 
-    // Passo 3: Avaliar anomalias no P/L
+    // Detect P/L anomalies and correct with Yahoo
     const anomalousTickers = [];
     for (const s of parsedStocks) {
       if (s.pl === 0 && s.cotacao > 0 && s.pvp > 0) {
@@ -162,15 +160,14 @@ export async function updateFundamentals(prisma) {
     
     let yahooCorrections = {};
     if (anomalousTickers.length > 0) {
-      console.log(`[Cron] ${anomalousTickers.length} anomalias detectadas no P/L. Validando no Yahoo...`);
+      console.log(`[Cron] ${anomalousTickers.length} anomalias P/L detectadas. Validando no Yahoo...`);
       yahooCorrections = await fetchYahooPLBatch(anomalousTickers);
     }
     
-    // Passo 5: Salvar no Banco
+    // Save to DB
     let processedCount = 0;
     for (const s of parsedStocks) {
       if (yahooCorrections[s.ticker] !== undefined) {
-        console.log(`[Correção] ${s.ticker}: P/L corrigido de ${s.pl} para ${yahooCorrections[s.ticker]}`);
         s.pl = yahooCorrections[s.ticker];
       }
       
@@ -187,7 +184,7 @@ export async function updateFundamentals(prisma) {
       await prisma.stock.upsert({
         where: { ticker: s.ticker },
         update: {
-          price: s.cotacao,
+          cotacaoAtual: s.cotacao,
           pl: s.pl,
           pvp: s.pvp,
           divYield: s.divYield,
@@ -195,9 +192,9 @@ export async function updateFundamentals(prisma) {
           margemLiquida: s.margemLiquida,
           roic: s.roic,
           roe: s.roe,
-          liquidezMedia: s.liquidezMedia,
-          dividaBrutaPatrim: s.dividaBrutaPatrim,
-          crescReceita5a: s.crescReceita5a,
+          liq2Meses: s.liq2Meses,
+          divBrutaPatrim: s.divBrutaPatrim,
+          crescRec5a: s.crescRec5a,
           evEbit: s.evEbit,
           lpa: lpa,
           vpa: vpa,
@@ -207,7 +204,7 @@ export async function updateFundamentals(prisma) {
           ticker: s.ticker,
           empresa: s.ticker,
           setor: 'Desconhecido',
-          price: s.cotacao,
+          cotacaoAtual: s.cotacao,
           pl: s.pl,
           pvp: s.pvp,
           divYield: s.divYield,
@@ -215,9 +212,9 @@ export async function updateFundamentals(prisma) {
           margemLiquida: s.margemLiquida,
           roic: s.roic,
           roe: s.roe,
-          liquidezMedia: s.liquidezMedia,
-          dividaBrutaPatrim: s.dividaBrutaPatrim,
-          crescReceita5a: s.crescReceita5a,
+          liq2Meses: s.liq2Meses,
+          divBrutaPatrim: s.divBrutaPatrim,
+          crescRec5a: s.crescRec5a,
           evEbit: s.evEbit,
           lpa: lpa,
           vpa: vpa,
@@ -226,8 +223,9 @@ export async function updateFundamentals(prisma) {
       processedCount++;
     }
 
-    // Parte de FIIs
+    // FIIs from Fundamentus
     console.log('[Cron] Iniciando atualização de FIIs (Fundamentus)...');
+    let fiiCount = 0;
     const htmlFii = await fetchFundamentusFIIs();
     const tbodyFiiIdx = htmlFii.indexOf('<tbody>');
     const tbodyFiiEndIdx = htmlFii.indexOf('</tbody>');
@@ -247,37 +245,39 @@ export async function updateFundamentals(prisma) {
         const ticker = tickerMatch[1];
         
         const liquidez = parsePtBrNumber(tds[4]);
-        if (liquidez < 100000) continue;
+        if (liquidez < 10000) continue; // Lower threshold to include more FIIs
 
-        await prisma.fii.upsert({
-          where: { ticker },
-          update: {
-            price: parsePtBrNumber(tds[2]),
-            segmento: tds[1].replace(/<[^>]+>/g, '').trim(),
-            divYield: parsePtBrNumber(tds[5]),
-            pvp: parsePtBrNumber(tds[6]),
-            liquidezMedia: liquidez,
-            vacanciaFisica: parsePtBrNumber(tds[12]),
-            quantidadeImoveis: parsePtBrNumber(tds[14]) || 0,
-            updatedAt: new Date()
-          },
-          create: {
-            ticker,
-            nome: ticker,
-            segmento: tds[1].replace(/<[^>]+>/g, '').trim(),
-            price: parsePtBrNumber(tds[2]),
-            divYield: parsePtBrNumber(tds[5]),
-            pvp: parsePtBrNumber(tds[6]),
-            liquidezMedia: liquidez,
-            vacanciaFisica: parsePtBrNumber(tds[12]),
-            quantidadeImoveis: parsePtBrNumber(tds[14]) || 0,
-          }
-        });
+        try {
+          await prisma.fii.upsert({
+            where: { ticker },
+            update: {
+              cotacaoAtual: parsePtBrNumber(tds[2]),
+              segmento: tds[1].replace(/<[^>]+>/g, '').trim(),
+              divYield: parsePtBrNumber(tds[5]),
+              pvp: parsePtBrNumber(tds[6]),
+              liquidezMedia: liquidez,
+              updatedAt: new Date()
+            },
+            create: {
+              ticker,
+              nome: ticker,
+              segmento: tds[1].replace(/<[^>]+>/g, '').trim() || 'Desconhecido',
+              gestora: 'Desconhecido',
+              cotacaoAtual: parsePtBrNumber(tds[2]),
+              divYield: parsePtBrNumber(tds[5]),
+              pvp: parsePtBrNumber(tds[6]),
+              liquidezMedia: liquidez,
+            }
+          });
+          fiiCount++;
+        } catch (err) {
+          console.warn(`[FII] Falha upsert ${ticker}: ${err.message}`);
+        }
       }
     }
     
-    console.log(`✅ Concluído! Ações: ${processedCount}. FIIs concluídos.`);
-    return { success: true, count: processedCount };
+    console.log(`✅ Concluído! Ações: ${processedCount}. FIIs: ${fiiCount}.`);
+    return { success: true, stocks: processedCount, fiis: fiiCount };
   } catch (err) {
     console.error('❌ Erro na cron de fundamentos:', err);
     return { success: false, error: err.message };

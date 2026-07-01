@@ -91,21 +91,21 @@ app.get('/api/history/:ticker', async (req, res) => {
 
 // --- ROTINAS (CRON JOBS) ---
 
-// Cron 1: Atualizar Cotações de hora em hora (10:00 às 18:00) de segunda a sexta
-cron.schedule('0 10-18 * * 1-5', async () => {
-  console.log('Iniciando rotina de cotações...');
+// Cron 1: Atualizar Cotações de hora em hora (24/7)
+cron.schedule('0 * * * *', async () => {
+  console.log('[Cron] Iniciando rotina de cotações (hora em hora)...');
   await updateQuotes(prisma);
 });
 
-// Cron 2: Atualizar Fundamentos e Valuation diariamente às 22:00
-cron.schedule('0 22 * * *', async () => {
-  console.log('Iniciando rotina de fundamentos (22:00)...');
+// Cron 2: Atualizar Fundamentos e Valuation a cada 6 horas
+cron.schedule('0 */6 * * *', async () => {
+  console.log('[Cron] Iniciando rotina de fundamentos (6 em 6h)...');
   await updateFundamentals(prisma);
 });
 
-// Cron 3: Atualizar Histórico de 5 anos toda sexta-feira às 23:00
-cron.schedule('0 23 * * 5', async () => {
-  console.log('Iniciando rotina de histórico de 5 anos (Sexta 23:00)...');
+// Cron 3: Atualizar Histórico de 5 anos diariamente às 03:00
+cron.schedule('0 3 * * *', async () => {
+  console.log('[Cron] Iniciando rotina de histórico de 5 anos (03:00)...');
   await updateHistory(prisma);
 });
 

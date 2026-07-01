@@ -24,7 +24,7 @@ async function fetchYahooBatch(tickers) {
         }
       }
     } catch (err) {
-      console.warn(`[Yahoo Validação] Falha ao buscar cotações: ${err.message}`);
+      console.warn(`[Yahoo] Falha ao buscar cotações chunk: ${err.message}`);
     }
   }
   return prices;
@@ -49,28 +49,34 @@ export async function updateQuotes(prisma) {
 
     if (!data || Object.keys(data).length === 0) {
       console.log('[Cron] Yahoo Finance Quotes API falhou totalmente.');
-      return;
+      return { success: false, error: 'No data returned' };
     }
     
+    let updated = 0;
     const promises = allItems.map(async (item) => {
       const { ticker, model } = item;
       const priceObj = data[ticker];
       
       if (priceObj) {
-        await prisma[model].update({
-          where: { ticker },
-          data: {
-            price: priceObj.price,
-            changePercent: priceObj.changePercent,
-            updatedAt: new Date()
-          }
-        });
+        try {
+          await prisma[model].update({
+            where: { ticker },
+            data: {
+              cotacaoAtual: priceObj.price,
+              retornoDiario: priceObj.changePercent,
+              updatedAt: new Date()
+            }
+          });
+          updated++;
+        } catch (err) {
+          // Silently skip if ticker doesn't exist
+        }
       }
     });
     
     await Promise.all(promises);
-    console.log('✅ Cotações atualizadas com sucesso via Yahoo Finance!');
-    return { success: true, count: allItems.length };
+    console.log(`✅ Cotações atualizadas: ${updated}/${allItems.length} via Yahoo Finance!`);
+    return { success: true, count: updated };
   } catch (error) {
     console.error('❌ Erro na cron de quotes:', error);
     return { success: false, error: error.message };
