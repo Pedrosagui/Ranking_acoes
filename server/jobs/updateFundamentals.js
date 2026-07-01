@@ -244,8 +244,11 @@ export async function updateFundamentals(prisma) {
         if (!tickerMatch) continue;
         const ticker = tickerMatch[1];
         
-        const liquidez = parsePtBrNumber(tds[4]);
-        if (liquidez < 10000) continue; // Lower threshold to include more FIIs
+        // Fundamentus FII columns:
+        // [0] Papel, [1] Segmento, [2] Cotação, [3] FFO Yield,
+        // [4] Dividend Yield, [5] P/VP, [6] Valor de Mercado, [7] Liquidez
+        const liquidez = parsePtBrNumber(tds[7]);
+        if (liquidez < 10000) continue;
 
         try {
           await prisma.fii.upsert({
@@ -253,8 +256,8 @@ export async function updateFundamentals(prisma) {
             update: {
               cotacaoAtual: parsePtBrNumber(tds[2]),
               segmento: tds[1].replace(/<[^>]+>/g, '').trim(),
-              divYield: parsePtBrNumber(tds[5]),
-              pvp: parsePtBrNumber(tds[6]),
+              divYield: parsePtBrNumber(tds[4]),
+              pvp: parsePtBrNumber(tds[5]),
               liquidezMedia: liquidez,
               updatedAt: new Date()
             },
@@ -264,8 +267,8 @@ export async function updateFundamentals(prisma) {
               segmento: tds[1].replace(/<[^>]+>/g, '').trim() || 'Desconhecido',
               gestora: 'Desconhecido',
               cotacaoAtual: parsePtBrNumber(tds[2]),
-              divYield: parsePtBrNumber(tds[5]),
-              pvp: parsePtBrNumber(tds[6]),
+              divYield: parsePtBrNumber(tds[4]),
+              pvp: parsePtBrNumber(tds[5]),
               liquidezMedia: liquidez,
             }
           });
