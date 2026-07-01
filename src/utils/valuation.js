@@ -1,169 +1,259 @@
 // src/utils/valuation.js
-// Motor de cálculo de valuation — fórmulas de Graham, Bazin e Score
+// Motor de cálculo de valuation — fórmulas de Graham, Bazin e Score Composto
+
+export const PERFIS_SCORE = {
+  equilibrado: {
+    label: '⚖️ Equilibrado',
+    pesos: { valuation: 0.30, qualidade: 0.25, proventos: 0.25, saude: 0.15, crescimento: 0.05 }
+  },
+  dividendista: {
+    label: '💰 Dividendista',
+    pesos: { valuation: 0.20, qualidade: 0.20, proventos: 0.45, saude: 0.10, crescimento: 0.05 }
+  },
+  crescimento: {
+    label: '🚀 Crescimento (Growth)',
+    pesos: { valuation: 0.35, qualidade: 0.35, proventos: 0.05, saude: 0.20, crescimento: 0.05 }
+  },
+  greenblatt: {
+    label: '🧙 Magic Formula',
+    pesos: { valuation: 0.25, qualidade: 0.50, proventos: 0.05, saude: 0.15, crescimento: 0.05 }
+  },
+  conservador: {
+    label: '🛡️ Conservador',
+    pesos: { valuation: 0.20, qualidade: 0.15, proventos: 0.30, saude: 0.35, crescimento: 0.00 }
+  },
+};
 
 /**
  * Calcula a média de dividendos dos últimos 10 anos
- * @param {Array<{ano: number, totalPago: number}>} dividendosHistoricos
- * @returns {number}
  */
 export function calcMediaDividendos(dividendosHistoricos, lpa = 0) {
   if (!dividendosHistoricos || dividendosHistoricos.length === 0) {
-    return lpa > 0 ? lpa * 0.5 : 0; // Fallback: 50% de payout projetado
+    return lpa > 0 ? lpa * 0.5 : 0;
   }
   const soma = dividendosHistoricos.reduce((acc, d) => acc + (d.totalPago || 0), 0);
-  return soma / 10; // sempre divide por 10 conforme spec
+  return soma / 10;
 }
 
-/**
- * Preço Teto de Décio Bazin
- * Retorno mínimo exigido: 6% ao ano
- * @param {number} mediaDividendos
- * @returns {number}
- */
 export function calcBazin(mediaDividendos) {
   if (!mediaDividendos || mediaDividendos <= 0) return 0;
   return mediaDividendos / 0.06;
 }
 
-/**
- * Preço Justo de Benjamin Graham
- * √(22.5 × LPA × VPA)
- * Retorna 0 se LPA ou VPA forem negativos ou zero
- * @param {number} lpa - Lucro Por Ação
- * @param {number} vpa - Valor Patrimonial Por Ação
- * @returns {number}
- */
 export function calcGraham(lpa, vpa) {
   if (!lpa || !vpa || lpa <= 0 || vpa <= 0) return 0;
   const resultado = Math.sqrt(22.5 * lpa * vpa);
   return isNaN(resultado) ? 0 : resultado;
 }
 
-/**
- * Margem de segurança de Bazin em percentual
- * Positivo = ação abaixo do preço teto (oportunidade)
- * Negativo = ação acima do preço teto (cara)
- * @param {number} precoTetoBazin
- * @param {number} cotacaoAtual
- * @returns {number}
- */
 export function calcMargemBazin(precoTetoBazin, cotacaoAtual) {
   if (!precoTetoBazin || precoTetoBazin <= 0) return -999;
   return ((precoTetoBazin - cotacaoAtual) / precoTetoBazin) * 100;
 }
 
-/**
- * Margem de segurança de Graham em percentual
- * @param {number} precoJustoGraham
- * @param {number} cotacaoAtual
- * @returns {number}
- */
 export function calcMargemGraham(precoJustoGraham, cotacaoAtual) {
   if (!precoJustoGraham || precoJustoGraham <= 0) return -999;
   return ((precoJustoGraham - cotacaoAtual) / precoJustoGraham) * 100;
 }
 
 /**
- * Verifica se a empresa pagou dividendos em todos os anos (consistência)
- * @param {Array<{ano: number, totalPago: number}>} dividendosHistoricos
- * @returns {boolean} true se nunca deixou de pagar
+ * Normaliza um valor para 0-100 com base em min/max e direção
  */
-export function isConsistente(dividendosHistoricos) {
-  if (!dividendosHistoricos || dividendosHistoricos.length === 0) return false;
-  return !dividendosHistoricos.some(d => !d.totalPago || d.totalPago === 0);
+function normalize(value, min, max, inverse = false) {
+  if (value === null || value === undefined || isNaN(value)) return 0;
+  const clamped = Math.min(Math.max(value, min), max);
+  const score = ((clamped - min) / (max - min)) * 100;
+  return inverse ? 100 - score : score;
 }
 
 /**
- * Clamp: limita um valor entre min e max
+ * Normaliza um array de valores por percentil (0-100)
  */
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
+export function normalizeByPercentile(items, higherIsBetter = true) {
+  const valid = items.filter(i => i.value !== null && !isNaN(i.value));
+  const sorted = [...valid].sort((a, b) =>
+    higherIsBetter ? a.value - b.value : b.value - a.value
+  );
+  const result = new Map();
+  sorted.forEach((item, index) => {
+    result.set(item.ticker, (index / (sorted.length - 1 || 1)) * 100);
+  });
+  return result;
 }
 
 /**
- * Calcula o Score Final (0 a 100) de uma ação
- *
- * Peso Desconto: 70% — média das margens Bazin e Graham
- * Peso Qualidade: 20% — ROE (máximo em ROE >= 15%)
- * Peso Consistência: 10% — pagou dividendos todos os 10 anos
- *
- * @param {Object} stock - Objeto completo da ação com todos os campos calculados
- * @returns {number} Score de 0 a 100
+ * FILTROS ELIMINATÓRIOS
  */
-export function calcScore(stock) {
-  const { lpa, vpa, roe, dividendosHistoricos, cotacaoAtual } = stock;
+export function passaFiltrosEliminatorios(stock) {
+  if (!stock.lpa || stock.lpa <= 0) return false;          // LPA negativo
+  if (!stock.vpa || stock.vpa <= 0) return false;          // VPA negativo
+  const pl = stock.cotacaoAtual / stock.lpa;
+  if (pl <= 0 || pl > 80) return false;                    // P/L absurdo
+  if (stock.dlEbitda && stock.dlEbitda > 5) return false;  // Dívida perigosa (se tivermos o dado exato)
+  return true;
+}
 
-  // Filtro de corte: LPA ou VPA negativos/zero → Score 0
-  if (!lpa || !vpa || lpa <= 0 || vpa <= 0) return 0;
-  if (!cotacaoAtual || cotacaoAtual <= 0) return 0;
+// ======================== PILARES ========================
 
-  // Calcula métricas intermediárias
-  const mediaDividendos = calcMediaDividendos(dividendosHistoricos, lpa);
-  const precoTetoBazin = calcBazin(mediaDividendos);
-  const precoJustoGraham = calcGraham(lpa, vpa);
-  const margemBazin = calcMargemBazin(precoTetoBazin, cotacaoAtual);
-  const margemGraham = calcMargemGraham(precoJustoGraham, cotacaoAtual);
+function calcPilar1(stock, percentilPL, percentilPVP) {
+  const sBazin = normalize(stock.margemBazin, -30, 50);
+  const sGraham = normalize(stock.margemGraham, -30, 50);
+  const spl = percentilPL.get(stock.ticker) ?? 0;
+  const spvp = percentilPVP.get(stock.ticker) ?? 0;
+  return 0.35 * sBazin + 0.35 * sGraham + 0.15 * spl + 0.15 * spvp;
+}
 
-  // ── Peso Desconto (70 pts) ───────────────────────────────────
-  // Média das duas margens; 50% de margem média = pontuação máxima
-  const mediaMargens = (margemBazin + margemGraham) / 2;
-  const pontoDesconto = clamp((mediaMargens / 50) * 70, 0, 70);
+function calcPilar2(stock, percentilROE, percentilROIC, percentilMargem) {
+  const sROE = percentilROE.get(stock.ticker) ?? 0;
+  const sROIC = percentilROIC.get(stock.ticker) ?? 0;
+  const sMargem = percentilMargem.get(stock.ticker) ?? 0;
+  const hasROIC = stock.roic !== null && stock.roic !== undefined;
+  if (!hasROIC) {
+    return 0.60 * sROE + 0.40 * sMargem;
+  }
+  return 0.40 * sROE + 0.35 * sROIC + 0.25 * sMargem;
+}
 
-  // ── Peso Qualidade / ROE (20 a 30 pts) ────────────────────────────
-  // ROE >= 15% = pontuação máxima. Se não tiver histórico, peso vai para 30.
-  const roeValor = roe || 0;
-  const pesoMaxRoe = (!dividendosHistoricos || dividendosHistoricos.length === 0) ? 30 : 20;
-  const pontoROE = clamp((roeValor / 15) * pesoMaxRoe, 0, pesoMaxRoe);
+function calcPilar3(stock) {
+  const dy = stock.divYield || 0;
+  const sDY = normalize(dy, 0, 10);
+  
+  const anosPagos = stock.dividendosHistoricos
+    ? stock.dividendosHistoricos.filter(d => (d.totalPago || 0) > 0).length
+    : 0;
+  const sConsistencia = (anosPagos / 10) * 100;
+  
+  const divs = stock.dividendosHistoricos || [];
+  let sMediaDiv = 50;
+  if (divs.length >= 6) {
+    const ultimos3 = divs.slice(-3).map(d => d.totalPago || 0);
+    const primeiros3 = divs.slice(0, 3).map(d => d.totalPago || 0);
+    const mediaUlt = ultimos3.reduce((a, b) => a + b, 0) / 3;
+    const mediaPri = primeiros3.reduce((a, b) => a + b, 0) / 3;
+    const crescimento = mediaPri > 0 ? ((mediaUlt - mediaPri) / mediaPri) : 0;
+    sMediaDiv = normalize(crescimento * 100, -50, 100);
+  }
+  
+  return 0.40 * sDY + 0.35 * sConsistencia + 0.25 * sMediaDiv;
+}
 
-  // ── Peso Consistência (10 pts) ───────────────────────────────
-  const pontoConsistencia = isConsistente(dividendosHistoricos) ? 10 : 0;
+function calcPilar4(stock) {
+  // Proxy de alavancagem: Dívida Bruta / Patrimônio (se não tiver dlEbitda explícito)
+  const dl = stock.divBrutaPatrim ?? 2; 
+  const sDL = normalize(dl, -1, 5, true); 
+  const liq = stock.liqCorr ?? 1.5;
+  const sLiq = normalize(liq, 0.5, 3);
+  return 0.60 * sDL + 0.40 * sLiq;
+}
 
-  return Math.round(pontoDesconto + pontoROE + pontoConsistencia);
+function calcPilar5(stock, percentilEarningYield) {
+  const pl = stock.cotacaoAtual / stock.lpa;
+  const crescLPA = stock.crescLPA || stock.crescRec5a || 0; 
+  const peg = crescLPA > 0 ? pl / crescLPA : null;
+  const sPEG = peg !== null ? normalize(peg, 0, 2, true) : 50;
+  const sEY = percentilEarningYield.get(stock.ticker) ?? 50;
+  return 0.50 * sPEG + 0.50 * sEY;
+}
+
+// ======================== MOTOR PRINCIPAL ========================
+
+export function calcCompositeScore(stocks, pesos = PERFIS_SCORE.equilibrado.pesos) {
+  const validos = stocks.filter(passaFiltrosEliminatorios);
+  const eliminados = stocks
+    .filter(s => !passaFiltrosEliminatorios(s))
+    .map(s => ({ ...s, scoreComposto: 0, eliminado: true, detalhePilares: { valuation: 0, qualidade: 0, proventos: 0, saude: 0, crescimento: 0 } }));
+    
+  const percentilPL = normalizeByPercentile(
+    validos.map(s => ({ ticker: s.ticker, value: s.cotacaoAtual / s.lpa })),
+    false 
+  );
+  const percentilPVP = normalizeByPercentile(
+    validos.map(s => ({ ticker: s.ticker, value: s.pvp })),
+    false
+  );
+  const percentilROE = normalizeByPercentile(
+    validos.map(s => ({ ticker: s.ticker, value: s.roe })),
+    true 
+  );
+  const percentilROIC = normalizeByPercentile(
+    validos.filter(s => s.roic).map(s => ({ ticker: s.ticker, value: s.roic })),
+    true
+  );
+  const percentilMargem = normalizeByPercentile(
+    validos.filter(s => s.margemLiquida).map(s => ({ ticker: s.ticker, value: s.margemLiquida })),
+    true
+  );
+  const percentilEY = normalizeByPercentile(
+    // Earning Yield = 1 / EV/EBIT
+    validos.filter(s => s.evEbit && s.evEbit > 0).map(s => ({ ticker: s.ticker, value: 1 / s.evEbit })),
+    true
+  );
+
+  const scored = validos.map(stock => {
+    const s1 = calcPilar1(stock, percentilPL, percentilPVP);
+    const s2 = calcPilar2(stock, percentilROE, percentilROIC, percentilMargem);
+    const s3 = calcPilar3(stock);
+    const s4 = calcPilar4(stock);
+    const s5 = calcPilar5(stock, percentilEY);
+    
+    const scoreComposto = Math.round(
+      pesos.valuation   * s1 +
+      pesos.qualidade   * s2 +
+      pesos.proventos   * s3 +
+      pesos.saude       * s4 +
+      pesos.crescimento * s5
+    );
+    
+    return {
+      ...stock,
+      score: scoreComposto, // Override para manter compatibilidade no UI de "score"
+      scoreComposto,
+      detalhePilares: {
+        valuation:   Math.round(s1),
+        qualidade:   Math.round(s2),
+        proventos:   Math.round(s3),
+        saude:       Math.round(s4),
+        crescimento: Math.round(s5),
+      },
+      eliminado: false,
+    };
+  });
+  
+  return [...scored, ...eliminados]
+    .sort((a, b) => b.score - a.score)
+    .map((s, i) => ({ ...s, posicao: i + 1 }));
 }
 
 /**
- * Piotroski F-Score Simplificado (0 a 9)
- * Como não temos histórico anual detalhado no Fundamentus (apenas o snapshot atual),
- * usamos proxies estáticos disponíveis:
- * 1. Lucratividade: ROE > 0 (1)
- * 2. Lucratividade: Margem Líquida > 0 (1)
- * 3. Lucratividade: LPA > 0 (1)
- * 4. Alavancagem: Dívida Bruta/Patrimônio < 1 (1)
- * 5. Alavancagem: Liquidez Corrente > 1 (1)
- * 6. Eficiência: Margem EBIT > 0 (1)
- * 7. Crescimento: Receita 5a > 0 (1)
- * 8. Dividendos: Pagou dividendo consistente? (1)
- * 9. Valuation: P/L > 0 e < 15 (1)
+ * F-Score simplificado (Piotroski)
  */
 export function calcSimplifiedFScore(stock) {
-  let fScore = 0;
-  if ((stock.roe || 0) > 0) fScore += 1;
-  if ((stock.margemLiquida || 0) > 0) fScore += 1;
-  if ((stock.lpa || 0) > 0) fScore += 1;
-  if ((stock.divBrutaPatrim || 999) < 1) fScore += 1; // Menos dívida é melhor
-  if ((stock.liqCorr || 0) > 1) fScore += 1;
-  if ((stock.margemEbit || 0) > 0) fScore += 1;
-  if ((stock.crescRec5a || 0) > 0) fScore += 1;
-  if (isConsistente(stock.dividendosHistoricos)) fScore += 1;
-  if ((stock.pl || 0) > 0 && (stock.pl || 0) < 15) fScore += 1;
-  
-  return fScore;
+  let score = 0;
+  if (stock.roe && stock.roe > 0) score++;
+  if (stock.lpa && stock.lpa > 0) score++;
+  if (stock.crescRec5a && stock.crescRec5a > 0) score++;
+  if (stock.divBrutaPatrim !== undefined && stock.divBrutaPatrim < 1) score++;
+  if (stock.liqCorr && stock.liqCorr > 1) score++;
+  if (stock.margemEbit && stock.margemEbit > 10) score++;
+  if (stock.divYield && stock.divYield > 0) score++;
+  if (stock.pl && stock.pl > 0 && stock.pl < 15) score++;
+  if (stock.margemLiquida && stock.margemLiquida > 10) score++;
+  return score;
+}
+
+export function rankPiotroskiGraham(stocks) {
+  return [...stocks]
+    .filter(s => s.margemGraham > 0)
+    .sort((a, b) => {
+      if (b.fScore !== a.fScore) return b.fScore - a.fScore;
+      return b.margemGraham - a.margemGraham;
+    })
+    .map((stock, index) => ({ ...stock, posicao: index + 1 }));
 }
 
 /**
- * PEG Ratio = P/L / Crescimento
- * Usamos crescimento da receita em 5 anos como proxy para crescimento de lucros
- */
-export function calcPegRatio(pl, crescRec5a) {
-  if (!pl || !crescRec5a || crescRec5a <= 0 || pl <= 0) return null;
-  // Multiplica por 100 pois crescRec5a costuma vir em percentual (ex: 15 para 15%)
-  return pl / crescRec5a;
-}
-
-/**
- * Enriquece um objeto de ação com todos os valores calculados
- * @param {Object} rawStock - Dados brutos do IndexedDB/API
- * @returns {Object} Ação com todos os campos de valuation calculados
+ * Prepara o objeto básico. Apenas Bazin, Graham e fScore aqui.
+ * O score final será calculado pelo StockContext.jsx (calcCompositeScore).
  */
 export function enrichStock(rawStock) {
   const mediaDividendos = calcMediaDividendos(rawStock.dividendosHistoricos, rawStock.lpa);
@@ -171,11 +261,7 @@ export function enrichStock(rawStock) {
   const precoJustoGraham = calcGraham(rawStock.lpa, rawStock.vpa);
   const margemBazin = calcMargemBazin(precoTetoBazin, rawStock.cotacaoAtual);
   const margemGraham = calcMargemGraham(precoJustoGraham, rawStock.cotacaoAtual);
-  const score = calcScore(rawStock);
-  const consistente = isConsistente(rawStock.dividendosHistoricos);
-  
   const fScore = calcSimplifiedFScore(rawStock);
-  const pegRatio = calcPegRatio(rawStock.pl, rawStock.crescRec5a);
 
   return {
     ...rawStock,
@@ -184,64 +270,6 @@ export function enrichStock(rawStock) {
     precoJustoGraham,
     margemBazin,
     margemGraham,
-    score,
-    consistente,
-    fScore,
-    pegRatio
+    fScore
   };
-}
-
-/**
- * Ordena um array de ações pelo Score (maior primeiro)
- * Ações com score 0 vão para o fim
- * @param {Array<Object>} stocks
- * @returns {Array<Object>} Array ordenado com campo `posicao`
- */
-export function rankStocks(stocks) {
-  return [...stocks]
-    .sort((a, b) => b.score - a.score)
-    .map((stock, index) => ({ ...stock, posicao: index + 1 }));
-}
-
-/**
- * Ordena pelo Piotroski F-Score primeiro, e desempata pela Margem de Graham
- */
-export function rankPiotroskiGraham(stocks) {
-  return [...stocks]
-    .filter(s => s.margemGraham > 0) // Tem que ter desconto de Graham
-    .sort((a, b) => {
-      if (b.fScore !== a.fScore) return b.fScore - a.fScore; // Maior F-Score primeiro
-      return b.margemGraham - a.margemGraham; // Desempate por maior margem
-    })
-    .map((stock, index) => ({ ...stock, posicao: index + 1 }));
-}
-
-/**
- * Filtra setor Tech e ordena pelo menor PEG Ratio (que seja > 0)
- */
-export function rankTechPegRatio(stocks) {
-  const techKeywords = ['computador', 'programa', 'equipamento', 'tecnologia', 'software', 'dados'];
-  
-  return [...stocks]
-    .filter(s => {
-      if (!s.setor) return false;
-      const setorLower = s.setor.toLowerCase();
-      return techKeywords.some(k => setorLower.includes(k));
-    })
-    .filter(s => s.pegRatio !== null && s.pegRatio > 0 && s.pegRatio < 5) // PEG razoável
-    .sort((a, b) => a.pegRatio - b.pegRatio) // Menor PEG é melhor
-    .map((stock, index) => ({ ...stock, posicao: index + 1 }));
-}
-
-/**
- * Retorna o label de oportunidade baseado nas margens
- * @param {number} margemBazin
- * @param {number} margemGraham
- * @returns {'COMPRA_FORTE' | 'NEUTRO' | 'CARO'}
- */
-export function getOportunidade(margemBazin, margemGraham) {
-  const mediaMargens = (margemBazin + margemGraham) / 2;
-  if (mediaMargens >= 20) return 'COMPRA_FORTE';
-  if (mediaMargens >= 0) return 'NEUTRO';
-  return 'CARO';
 }

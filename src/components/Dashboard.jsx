@@ -56,7 +56,7 @@ function StockLogo({ ticker }) {
 }
 
 export default function Dashboard() {
-  const { filteredStocks, stocks, isLoading, isSyncing, error } = useStocks();
+  const { filteredStocks, stocks, isLoading, isSyncing, error, activeProfile, setProfile } = useStocks();
   const [activeTab, setActiveTab] = useState('graham_bazin');
   const [selectedStock, setSelectedStock] = useState(null);
 
@@ -66,7 +66,7 @@ export default function Dashboard() {
 
   const renderGrahamBazin = () => (
     <>
-      {filteredStocks.length > 0 && <Top10Chart stocks={filteredStocks} title="Top 10 — Ranking Valuation" scoreField="score" />}
+      {filteredStocks.length > 0 && <Top10Chart stocks={filteredStocks} title={`Top 10 — Ranking ${PERFIS_SCORE[activeProfile]?.label || 'Valuation'}`} scoreField="scoreComposto" scoreSuffix="pts" />}
       <div className="table-container">
         <table className="valuation-table">
           <thead>
@@ -81,7 +81,7 @@ export default function Dashboard() {
               <th>Dív. Bruta /<br/>Patrim.</th>
               <th style={{ backgroundColor: '#fceb8d', color: '#333' }}>Valuation<br/>Bazin</th>
               <th style={{ backgroundColor: '#8bbcf6', color: '#333' }}>Valuation<br/>Graham</th>
-              <th style={{ backgroundColor: '#f18a70', color: '#fff' }}>Score<br/>Valuation</th>
+              <th style={{ backgroundColor: '#f18a70', color: '#fff' }}>Score<br/>Final</th>
             </tr>
           </thead>
           <tbody>
@@ -113,7 +113,7 @@ export default function Dashboard() {
                   R$ {stock.precoJustoGraham?.toFixed(2) || '0.00'}
                 </td>
                 <td style={{ backgroundColor: '#f18a7020', color: '#f18a70', fontWeight: 'bold' }}>
-                  {stock.score}
+                  {stock.scoreComposto}
                 </td>
               </tr>
             ))}
@@ -188,19 +188,36 @@ export default function Dashboard() {
 
       {isSyncing && stocks.length > 0 && <SyncProgressBar />}
 
-      <div style={{ display: 'flex', gap: '8px', margin: '0 16px 16px', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px' }}>
-        <button 
-          className={`btn ${activeTab === 'graham_bazin' ? 'btn-primary' : 'btn-outline'}`}
-          onClick={() => setActiveTab('graham_bazin')}
-        >
-          Ranking Graham & Bazin
-        </button>
-        <button 
-          className={`btn ${activeTab === 'piotroski' ? 'btn-primary' : 'btn-outline'}`}
-          onClick={() => setActiveTab('piotroski')}
-        >
-          Graham + Piotroski
-        </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 16px 16px', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button 
+            className={`btn ${activeTab === 'graham_bazin' ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => setActiveTab('graham_bazin')}
+          >
+            Ranking Compostos
+          </button>
+          <button 
+            className={`btn ${activeTab === 'piotroski' ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => setActiveTab('piotroski')}
+          >
+            Graham + Piotroski
+          </button>
+        </div>
+
+        {activeTab === 'graham_bazin' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Perfil:</span>
+            <select 
+              value={activeProfile} 
+              onChange={(e) => setProfile(e.target.value)}
+              style={{ padding: '6px 12px', borderRadius: '4px', background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }}
+            >
+              {Object.entries(PERFIS_SCORE).map(([key, perfil]) => (
+                <option key={key} value={key}>{perfil.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {activeTab === 'graham_bazin' && renderGrahamBazin()}

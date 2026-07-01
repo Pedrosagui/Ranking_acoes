@@ -5,7 +5,7 @@ import { createContext, useContext, useReducer, useEffect, useCallback, useRef }
 import { getAllStocks, getSetting, setSetting, getRecentLogs, clearAll, clearStocks } from '../db/database';
 import { syncAllStocks } from '../services/syncService';
 import { validateToken } from '../services/brapiService';
-import { rankStocks } from '../utils/valuation';
+import { calcCompositeScore, PERFIS_SCORE } from '../utils/valuation';
 
 const ONE_HOUR_MS = 60 * 60 * 1000; // 1 hora em milissegundos
 
@@ -20,6 +20,7 @@ const initialState = {
   lastSync: null,       // ISO string do último sync
   error: null,          // Mensagem de erro
   autoSyncNeeded: false, // Flag para auto-sync
+  activeProfile: 'equilibrado', // Perfil de pontuação atual
   filters: {
     busca: '',
     setor: 'Todos',
@@ -44,13 +45,21 @@ function stockReducer(state, action) {
     case 'SET_STOCKS':
       return { ...state, stocks: action.payload };
 
-    case 'MERGE_BATCH':
+    case 'MERGE_BATCH': {
       // Atualização progressiva: mescla lote com estado atual
       const existing = state.stocks.filter(
         s => !action.payload.find(n => n.ticker === s.ticker)
       );
-      const merged = rankStocks([...existing, ...action.payload]);
+      const merged = calcCompositeScore([...existing, ...action.payload], PERFIS_SCORE[state.activeProfile].pesos);
       return { ...state, stocks: merged };
+    }
+
+    case 'SET_PROFILE':
+      return { 
+        ...state, 
+        activeProfile: action.payload,
+        stocks: calcCompositeScore(state.stocks, PERFIS_SCORE[action.payload].pesos)
+      };
 
     case 'SET_TOKEN':
       return { ...state, apiToken: action.payload };
@@ -108,7 +117,7 @@ export function StockProvider({ children }) {
         if (logs.length) dispatch({ type: 'SET_LOGS', payload: logs });
 
         if (stocks.length > 0) {
-          dispatch({ type: 'SET_STOCKS', payload: rankStocks(stocks) });
+          dispatch({ type: 'SET_STOCKS', payload: calcCompositeScore(stocks, PERFIS_SCORE['equilibrado'].pesos) });
         }
 
         // Auto-sync se dados estão velhos (>1h) ou não existem
@@ -148,7 +157,7 @@ export function StockProvider({ children }) {
 
       // Recarrega tudo do IndexedDB ao final para garantir consistência
       const finalStocks = await getAllStocks();
-      dispatch({ type: 'SET_STOCKS', payload: rankStocks(finalStocks) });
+      dispatch({ type: 'SET_STOCKS', payload: calcCompositeScore(finalStocks, PERFIS_SCORE[state.activeProfile].pesos) });
 
       const now = new Date().toISOString();
       await setSetting('lastSync', now);
@@ -210,6 +219,10 @@ export function StockProvider({ children }) {
     dispatch({ type: 'SET_FILTER', key, value });
   }, []);
 
+  const setProfile = useCallback((profileKey) => {
+    dispatch({ type: 'SET_PROFILE', payload: profileKey });
+  }, []);
+
   // ── Stocks filtrados e ordenados ──────────────────────────────
   const filteredStocks = (() => {
     let result = [...state.stocks];
@@ -257,6 +270,7 @@ export function StockProvider({ children }) {
     checkToken,
     resetData,
     setFilter,
+    setProfile,
   };
 
   return (

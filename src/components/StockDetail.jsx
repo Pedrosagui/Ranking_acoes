@@ -73,22 +73,50 @@ export default function StockDetail({ stock, onClose }) {
           <button className="close-btn" onClick={onClose}>&times;</button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-          <div style={{ padding: '16px', border: '1px solid var(--border-light)', borderRadius: '8px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border-light)', borderRadius: '8px', background: 'var(--bg-base)' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>Cotação Atual</div>
             <div style={{ fontSize: '24px', fontWeight: 'bold' }}>R$ {stock.cotacaoAtual?.toFixed(2)}</div>
           </div>
-          <div style={{ padding: '16px', border: '1px solid var(--border-light)', borderRadius: '8px' }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>Score Total</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary)' }}>{stock.score} pts</div>
+          <div style={{ padding: '16px', border: '1px solid var(--border-light)', borderRadius: '8px', background: 'var(--bg-base)' }}>
+            <div style={{ color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>Score Final</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary)' }}>{stock.scoreComposto || stock.score} pts</div>
           </div>
-          <div style={{ padding: '16px', border: '1px solid var(--border-light)', borderRadius: '8px' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border-light)', borderRadius: '8px', background: 'var(--bg-base)' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>Margem Graham</div>
             <div style={{ fontSize: '24px', fontWeight: 'bold', color: stock.margemGraham > 0 ? 'var(--green)' : 'var(--red)' }}>
               {stock.margemGraham?.toFixed(1)}%
             </div>
           </div>
         </div>
+
+        {stock.detalhePilares && (
+          <>
+            <h3>Pontuação por Pilares (0-100)</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', marginBottom: '24px', textAlign: 'center' }}>
+              <div style={{ padding: '12px 8px', border: '1px solid var(--border-light)', borderRadius: '8px', background: 'var(--bg-base)' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>VALUATION</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#8bbcf6' }}>{stock.detalhePilares.valuation}</div>
+              </div>
+              <div style={{ padding: '12px 8px', border: '1px solid var(--border-light)', borderRadius: '8px', background: 'var(--bg-base)' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>QUALIDADE</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#4caf50' }}>{stock.detalhePilares.qualidade}</div>
+              </div>
+              <div style={{ padding: '12px 8px', border: '1px solid var(--border-light)', borderRadius: '8px', background: 'var(--bg-base)' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>PROVENTOS</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#fceb8d' }}>{stock.detalhePilares.proventos}</div>
+              </div>
+              <div style={{ padding: '12px 8px', border: '1px solid var(--border-light)', borderRadius: '8px', background: 'var(--bg-base)' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>SAÚDE FIN.</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#e53935' }}>{stock.detalhePilares.saude}</div>
+              </div>
+              <div style={{ padding: '12px 8px', border: '1px solid var(--border-light)', borderRadius: '8px', background: 'var(--bg-base)' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>CRESCIMENTO</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#ab47bc' }}>{stock.detalhePilares.crescimento}</div>
+              </div>
+            </div>
+          </>
+        )}
 
         <h3>Gráfico de Preços (Últimos 5 Anos)</h3>
         <div className="chart-container">
