@@ -93,7 +93,7 @@ export default function StockDetail({ stock, onClose }) {
         {stock.detalhePilares && (
           <>
             <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px' }}>Pontuação por Pilares</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', marginBottom: '32px', textAlign: 'center' }}>
+            <div className="pilares-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', marginBottom: '32px', textAlign: 'center' }}>
               <div className="metric-card" style={{ padding: '16px 8px' }}>
                 <div className="metric-title" style={{ fontSize: '11px', textTransform: 'uppercase' }}>Valuation</div>
                 <div className="metric-value" style={{ justifyContent: 'center', color: 'var(--blue)' }}>{stock.detalhePilares.valuation}</div>

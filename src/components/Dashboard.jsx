@@ -43,7 +43,7 @@ function Top10Chart({ stocks, title, scoreField, scoreSuffix = 'pts' }) {
   return (
     <div className="card">
       <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '24px' }}>{title}</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+      <div className="top10-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
         {top10.map((stock, i) => (
           <div key={stock.ticker} className="metric-card" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
