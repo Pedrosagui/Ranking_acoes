@@ -18,6 +18,24 @@ export async function syncAllStocks() {
     
     const dbStocks = await res.json();
     
+    // Normalizar logos e nomes (ex: AZTE3 e AZEV3 são a mesma empresa)
+    const logoMap = {};
+    dbStocks.forEach(s => {
+      if (s.ticker.startsWith('AZTE')) s.empresa = 'AZEVEDO E TRAVASSOS S.A.';
+      
+      const prefix = s.ticker.substring(0, 4);
+      const key = prefix === 'AZTE' ? 'AZEV' : prefix;
+      if (s.logoUrl && !logoMap[key]) logoMap[key] = s.logoUrl;
+    });
+
+    dbStocks.forEach(s => {
+      const prefix = s.ticker.substring(0, 4);
+      const key = prefix === 'AZTE' ? 'AZEV' : prefix;
+      if (!s.logoUrl && logoMap[key]) {
+        s.logoUrl = logoMap[key];
+      }
+    });
+    
     // Enriquecer (calcular margens Bazin, Graham, etc)
     const enriched = dbStocks.map(s => {
       const precoAtual = s.cotacaoAtual || 10;
