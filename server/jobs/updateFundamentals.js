@@ -44,34 +44,7 @@ function fetchFundamentus() {
   });
 }
 
-function fetchFundamentusFIIs() {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: 'www.fundamentus.com.br',
-      port: 443,
-      path: '/fii_resultado.php',
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        'Accept': 'text/html',
-        'Accept-Language': 'pt-BR,pt;q=0.9',
-      }
-    };
 
-    const req = https.request(options, (res) => {
-      let data = Buffer.alloc(0);
-      res.on('data', (chunk) => {
-        data = Buffer.concat([data, chunk]);
-      });
-      res.on('end', () => {
-        resolve(data.toString('latin1'));
-      });
-    });
-
-    req.on('error', (e) => reject(e));
-    req.end();
-  });
-}
 
 // Busca P/L do Yahoo Finance para corrigir anomalias
 async function fetchYahooPLBatch(tickers) {
@@ -223,64 +196,8 @@ export async function updateFundamentals(prisma) {
       processedCount++;
     }
 
-    // FIIs from Fundamentus
-    console.log('[Cron] Iniciando atualização de FIIs (Fundamentus)...');
-    let fiiCount = 0;
-    const htmlFii = await fetchFundamentusFIIs();
-    const tbodyFiiIdx = htmlFii.indexOf('<tbody>');
-    const tbodyFiiEndIdx = htmlFii.indexOf('</tbody>');
-    
-    if (tbodyFiiIdx !== -1 && tbodyFiiEndIdx !== -1) {
-      const tbodyFii = htmlFii.substring(tbodyFiiIdx, tbodyFiiEndIdx);
-      const rowsFii = tbodyFii.split(/<tr[^>]*>/i);
-      
-      for (const row of rowsFii) {
-        if (!row.includes('<td')) continue;
-        const tdsMatches = [...row.matchAll(/<td[^>]*>(.*?)<\/td>/gis)];
-        if (tdsMatches.length < 14) continue;
-        const tds = tdsMatches.map(m => m[1].replace(/\n/g, '').replace(/\r/g, '').trim());
-        
-        const tickerMatch = tds[0].match(/papel=([A-Z0-9]+)/);
-        if (!tickerMatch) continue;
-        const ticker = tickerMatch[1];
-        
-        // Fundamentus FII columns:
-        // [0] Papel, [1] Segmento, [2] Cotação, [3] FFO Yield,
-        // [4] Dividend Yield, [5] P/VP, [6] Valor de Mercado, [7] Liquidez
-        const liquidez = parsePtBrNumber(tds[7]);
-        if (liquidez < 10000) continue;
-
-        try {
-          await prisma.fii.upsert({
-            where: { ticker },
-            update: {
-              cotacaoAtual: parsePtBrNumber(tds[2]),
-              segmento: tds[1].replace(/<[^>]+>/g, '').trim(),
-              divYield: parsePtBrNumber(tds[4]),
-              pvp: parsePtBrNumber(tds[5]),
-              liquidezMedia: liquidez,
-              updatedAt: new Date()
-            },
-            create: {
-              ticker,
-              nome: ticker,
-              segmento: tds[1].replace(/<[^>]+>/g, '').trim() || 'Desconhecido',
-              gestora: 'Desconhecido',
-              cotacaoAtual: parsePtBrNumber(tds[2]),
-              divYield: parsePtBrNumber(tds[4]),
-              pvp: parsePtBrNumber(tds[5]),
-              liquidezMedia: liquidez,
-            }
-          });
-          fiiCount++;
-        } catch (err) {
-          console.warn(`[FII] Falha upsert ${ticker}: ${err.message}`);
-        }
-      }
-    }
-    
-    console.log(`✅ Concluído! Ações: ${processedCount}. FIIs: ${fiiCount}.`);
-    return { success: true, stocks: processedCount, fiis: fiiCount };
+    console.log(`✅ Concluído! Ações: ${processedCount}.`);
+    return { success: true, stocks: processedCount };
   } catch (err) {
     console.error('❌ Erro na cron de fundamentos:', err);
     return { success: false, error: err.message };

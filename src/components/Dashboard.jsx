@@ -3,9 +3,7 @@ import { useStocks } from '../context/StockContext';
 import StockDetail from './StockDetail';
 import { rankPiotroskiGraham, PERFIS_SCORE } from '../utils/valuation';
 import SyncModal from './SyncModal';
-import FIITable from './fii/FIITable';
-import ETFTable from './etf/ETFTable';
-import Portfolio from './portfolio/Portfolio';
+
 
 // --- SVGs for Icons (Vercel Style) ---
 const IconOverview = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>;
@@ -349,30 +347,7 @@ export default function Dashboard() {
             <span>Ranking Ações</span>
           </div>
           
-          <div 
-            className={`sidebar-item ${activeTab === 'fiis' ? 'active' : ''}`}
-            onClick={() => setActiveTab('fiis')}
-          >
-            <IconValuation />
-            <span>Ranking FIIs</span>
-          </div>
 
-          <div 
-            className={`sidebar-item ${activeTab === 'etfs' ? 'active' : ''}`}
-            onClick={() => setActiveTab('etfs')}
-          >
-            <IconOverview />
-            <span>Ranking ETFs</span>
-          </div>
-          
-          <div style={{ margin: '24px 0 8px 0', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-muted)', paddingLeft: '12px' }}>Gestão</div>
-          <div 
-            className={`sidebar-item ${activeTab === 'carteira' ? 'active' : ''}`}
-            onClick={() => setActiveTab('carteira')}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-            <span>Minha Carteira</span>
-          </div>
 
           <div 
             className={`sidebar-item ${activeTab === 'metodologia' ? 'active' : ''}`}
@@ -389,9 +364,6 @@ export default function Dashboard() {
       <main className="main-content pb-mobile">
         <header className="header">
           {activeTab === 'graham_bazin' ? 'Aegis / Speed Insights / Ranking Ações' :
-           activeTab === 'fiis' ? 'Aegis / Speed Insights / Ranking FIIs' :
-           activeTab === 'etfs' ? 'Aegis / Speed Insights / Ranking ETFs' :
-           activeTab === 'carteira' ? 'Aegis / Carteira / Dashboard' :
            'Aegis / Analytics / Metodologia'}
         </header>
 
@@ -407,9 +379,7 @@ export default function Dashboard() {
           )}
 
           {activeTab === 'graham_bazin' && renderGrahamBazin()}
-          {activeTab === 'fiis' && <FIITable />}
-          {activeTab === 'etfs' && <ETFTable />}
-          {activeTab === 'carteira' && <Portfolio />}
+
           {activeTab === 'metodologia' && renderMetodologia()}
         </div>
       </main>
@@ -421,20 +391,7 @@ export default function Dashboard() {
           <span>Ações</span>
         </div>
 
-        <div className={`bottom-nav-item ${activeTab === 'fiis' ? 'active' : ''}`} onClick={() => setActiveTab('fiis')}>
-          <IconValuation />
-          <span>FIIs</span>
-        </div>
 
-        <div className={`bottom-nav-item ${activeTab === 'etfs' ? 'active' : ''}`} onClick={() => setActiveTab('etfs')}>
-          <IconOverview />
-          <span>ETFs</span>
-        </div>
-        
-        <div className={`bottom-nav-item ${activeTab === 'carteira' ? 'active' : ''}`} onClick={() => setActiveTab('carteira')}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-          <span>Carteira</span>
-        </div>
 
         <div className={`bottom-nav-item ${activeTab === 'metodologia' ? 'active' : ''}`} onClick={() => setActiveTab('metodologia')}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>

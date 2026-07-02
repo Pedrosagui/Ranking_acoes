@@ -48,31 +48,7 @@ app.get('/api/stocks', async (req, res) => {
     res.json(stocks);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Erro ao buscar ações', details: error.message, stack: error.stack });
-  }
-});
-
-app.get('/api/fiis', async (req, res) => {
-  try {
-    const fiis = await prisma.fii.findMany({
-      orderBy: { ticker: 'asc' }
-    });
-    res.json(fiis);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao buscar FIIs', details: error.message });
-  }
-});
-
-app.get('/api/etfs', async (req, res) => {
-  try {
-    const etfs = await prisma.etf.findMany({
-      orderBy: { ticker: 'asc' }
-    });
-    res.json(etfs);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao buscar ETFs', details: error.message });
+    res.status(500).json({ error: 'Erro ao buscar ações', details: error.message });
   }
 });
 

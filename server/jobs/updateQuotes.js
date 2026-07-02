@@ -35,16 +35,8 @@ export async function updateQuotes(prisma) {
   
   try {
     const stocks = await prisma.stock.findMany({ select: { ticker: true } });
-    const fiis = await prisma.fii.findMany({ select: { ticker: true } });
-    const etfs = await prisma.etf.findMany({ select: { ticker: true } });
     
-    const allItems = [
-      ...stocks.map(s => ({ ticker: s.ticker, model: 'stock' })),
-      ...fiis.map(s => ({ ticker: s.ticker, model: 'fii' })),
-      ...etfs.map(s => ({ ticker: s.ticker, model: 'etf' }))
-    ];
-    
-    const tickers = allItems.map(i => i.ticker);
+    const tickers = stocks.map(s => s.ticker);
     let data = await fetchYahooBatch(tickers);
 
     if (!data || Object.keys(data).length === 0) {
@@ -53,14 +45,13 @@ export async function updateQuotes(prisma) {
     }
     
     let updated = 0;
-    const promises = allItems.map(async (item) => {
-      const { ticker, model } = item;
-      const priceObj = data[ticker];
+    const promises = stocks.map(async (item) => {
+      const priceObj = data[item.ticker];
       
       if (priceObj) {
         try {
-          await prisma[model].update({
-            where: { ticker },
+          await prisma.stock.update({
+            where: { ticker: item.ticker },
             data: {
               cotacaoAtual: priceObj.price,
               retornoDiario: priceObj.changePercent,
@@ -69,13 +60,13 @@ export async function updateQuotes(prisma) {
           });
           updated++;
         } catch (err) {
-          // Silently skip if ticker doesn't exist
+          // skip
         }
       }
     });
     
     await Promise.all(promises);
-    console.log(`✅ Cotações atualizadas: ${updated}/${allItems.length} via Yahoo Finance!`);
+    console.log(`✅ Cotações atualizadas: ${updated}/${stocks.length} via Yahoo Finance!`);
     return { success: true, count: updated };
   } catch (error) {
     console.error('❌ Erro na cron de quotes:', error);

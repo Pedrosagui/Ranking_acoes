@@ -13,11 +13,11 @@ model Stock {
   logoUrl String?
 
   // Indicadores Básicos
-  cotacaoAtual Float?
+  cotacaoAtual  Float?
   retornoDiario Float?
-  retorno12m   Float?
-  lpa          Float?
-  vpa          Float?
+  retorno12m    Float?
+  lpa           Float?
+  vpa           Float?
 
   // Indicadores de Valuation (Fundamentus)
   pl           Float?
@@ -47,9 +47,9 @@ model Stock {
   // Campos para os Filtros Futuros
   pegRatio             Float?
   fScore               Int?
-  financialData        Json? // Armazena DRE/Balanço puro (útil para calcular o F-Score detalhado depois)
-  historicalFinancials Json? // Histórico de balanços para cálculos como Piotroski F-Score (comparação YoY)
-  dividendHistory      Json? // Armazena o histórico de dividendos (ex: [{ano: 2024, totalPago: 1.5}])
+  financialData        Json?
+  historicalFinancials Json?
+  dividendHistory      Json?
 
   updatedAt DateTime @updatedAt
 
@@ -59,7 +59,7 @@ model Stock {
 model History {
   id     Int    @id @default(autoincrement())
   ticker String
-  date   String // "YYYY-MM-DD" or "YYYY-MM"
+  date   String // "YYYY-MM"
   price  Float
 
   @@unique([ticker, date])
@@ -74,40 +74,4 @@ model Dividend {
   stock Stock @relation(fields: [ticker], references: [ticker])
 
   @@unique([ticker, year])
-}
-
-model Fii {
-  ticker      String @id
-  nome        String
-  segmento    String
-  gestora     String
-  numCotistas Int?
-
-  // Dados dinâmicos da API
-  cotacaoAtual         Float?
-  retornoDiario        Float?
-  retorno12m           Float?
-  divYield             Float?
-  pvp                  Float?
-  liquidezMedia        Float?
-  valorPatrimonialCota Float?
-  dividendHistory      Json?
-
-  updatedAt DateTime @updatedAt
-}
-
-model Etf {
-  ticker    String @id
-  nome      String
-  benchmark String
-  taxaAdm   Float?
-  gestora   String
-  numAtivos Int?
-
-  // Dados dinâmicos da API
-  cotacaoAtual     Float?
-  retornoDiario    Float?
-  retorno12m       Float?
-
-  updatedAt DateTime @updatedAt
 }
